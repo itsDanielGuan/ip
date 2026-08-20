@@ -2,8 +2,8 @@ import java.util.Scanner;
 
 /**
  * Entry point of the Yappy chatbot.
- * At this stage the bot stores each line the user types, lists them back
- * on the "list" command, and exits on the "bye" command.
+ * At this stage the bot stores each line the user types as a Task, lists
+ * them back, marks them done or not done, and exits on the "bye" command.
  */
 public class Yappy {
     /** Name the chatbot introduces itself with. */
@@ -42,10 +42,10 @@ public class Yappy {
         System.out.println("What can I do for you?");
         System.out.println(DIVIDER);
 
-        // Two parallel arrays: tasks[i] holds the description and isDone[i] its status.
+        // Each Task carries its own description and done-status, so a single
+        // array replaces the parallel tasks/isDone arrays used before.
         // taskCount tracks how many slots are actually filled.
-        String[] tasks = new String[MAX_TASKS];
-        boolean[] isDone = new boolean[MAX_TASKS];
+        Task[] tasks = new Task[MAX_TASKS];
         int taskCount = 0;
 
         // Scanner reads the user's input from the keyboard (System.in), one line at a time.
@@ -65,21 +65,21 @@ public class Yappy {
                 System.out.println("Here are the tasks in your list:");
                 // The numbering shown to the user starts at 1, while the array is 0-indexed.
                 for (int i = 0; i < taskCount; i++) {
-                    System.out.println((i + 1) + ".[" + statusIcon(isDone[i]) + "] " + tasks[i]);
+                    System.out.println((i + 1) + "." + tasks[i]);
                 }
             } else if (input.startsWith(COMMAND_MARK + " ")) {
                 // Convert the number the user typed into the matching array index.
                 int index = Integer.parseInt(input.substring(COMMAND_MARK.length()).trim()) - 1;
-                isDone[index] = true;
+                tasks[index].markAsDone();
                 System.out.println("Nice! I've marked this task as done:");
-                System.out.println("  [" + statusIcon(isDone[index]) + "] " + tasks[index]);
+                System.out.println("  " + tasks[index]);
             } else if (input.startsWith(COMMAND_UNMARK + " ")) {
                 int index = Integer.parseInt(input.substring(COMMAND_UNMARK.length()).trim()) - 1;
-                isDone[index] = false;
+                tasks[index].markAsNotDone();
                 System.out.println("OK, I've marked this task as not done yet:");
-                System.out.println("  [" + statusIcon(isDone[index]) + "] " + tasks[index]);
+                System.out.println("  " + tasks[index]);
             } else if (taskCount < MAX_TASKS) {
-                tasks[taskCount] = input;
+                tasks[taskCount] = new Task(input);
                 taskCount++;
                 System.out.println("added: " + input);
             } else {
@@ -91,13 +91,5 @@ public class Yappy {
         System.out.println(DIVIDER);
         System.out.println("Bye. Hope to see you again soon!");
         System.out.println(DIVIDER);
-    }
-
-    /**
-     * Returns the icon shown inside the status brackets of a task:
-     * "X" when the task is done, a blank space when it is not.
-     */
-    private static String statusIcon(boolean isDone) {
-        return isDone ? "X" : " ";
     }
 }
