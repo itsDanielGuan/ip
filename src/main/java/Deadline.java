@@ -9,15 +9,15 @@ public class Deadline extends Task {
      * Creates a deadline task with the given description and deadline text.
      */
     public Deadline(String description, String by) {
-        super(description);
+        super(TaskType.DEADLINE, description);
         this.by = by;
     }
 
     /**
-     * Returns the deadline formatted with its type icon and deadline text.
+     * Returns the deadline formatted with its deadline text.
      */
     @Override
     public String toString() {
-        return "[D]" + super.toString() + " (by: " + by + ")";
+        return super.toString() + " (by: " + by + ")";
     }
 }

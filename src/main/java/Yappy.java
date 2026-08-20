@@ -14,30 +14,6 @@ public class Yappy {
     /** Horizontal line used to separate the chatbot's messages from the user's input. */
     private static final String DIVIDER = "____________________________________________________________";
 
-    /** Command that ends the conversation. */
-    private static final String COMMAND_BYE = "bye";
-
-    /** Command that lists everything stored so far. */
-    private static final String COMMAND_LIST = "list";
-
-    /** Command that marks a task as done, e.g. "mark 2". */
-    private static final String COMMAND_MARK = "mark";
-
-    /** Command that reverses a task back to not done, e.g. "unmark 2". */
-    private static final String COMMAND_UNMARK = "unmark";
-
-    /** Command that deletes a task, e.g. "delete 2". */
-    private static final String COMMAND_DELETE = "delete";
-
-    /** Command that adds a todo task, e.g. "todo borrow book". */
-    private static final String COMMAND_TODO = "todo";
-
-    /** Command that adds a deadline task, e.g. "deadline return book /by Sunday". */
-    private static final String COMMAND_DEADLINE = "deadline";
-
-    /** Command that adds an event task, e.g. "event meeting /from Mon 2pm /to 4pm". */
-    private static final String COMMAND_EVENT = "event";
-
     /** Marker separating a deadline description from its deadline text. */
     private static final String BY_MARKER = "/by";
 
@@ -72,8 +48,9 @@ public class Yappy {
         // input ending unexpectedly (e.g. Ctrl+D, or piping a file that has no "bye").
         while (scanner.hasNextLine()) {
             String input = scanner.nextLine().trim();
+            Command command = input.isEmpty() ? Command.UNKNOWN : Command.fromInput(input);
 
-            if (input.equals(COMMAND_BYE)) {
+            if (command == Command.BYE) {
                 break;
             }
 
@@ -99,37 +76,39 @@ public class Yappy {
             throw new YappyException("OOPS!!! Please type a command.");
         }
 
-        if (input.equals(COMMAND_LIST)) {
+        Command command = Command.fromInput(input);
+        switch (command) {
+        case LIST:
             printTaskList(tasks);
-        } else if (isCommand(input, COMMAND_MARK)) {
+            break;
+        case MARK:
             markTask(input, tasks);
-        } else if (isCommand(input, COMMAND_UNMARK)) {
+            break;
+        case UNMARK:
             unmarkTask(input, tasks);
-        } else if (isCommand(input, COMMAND_DELETE)) {
+            break;
+        case DELETE:
             deleteTask(input, tasks);
-        } else if (isCommand(input, COMMAND_TODO)) {
+            break;
+        case TODO:
             addTodo(tasks, input);
-        } else if (isCommand(input, COMMAND_DEADLINE)) {
+            break;
+        case DEADLINE:
             addDeadline(tasks, input);
-        } else if (isCommand(input, COMMAND_EVENT)) {
+            break;
+        case EVENT:
             addEvent(tasks, input);
-        } else {
+            break;
+        default:
             throw new YappyException("OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, unmark, or delete.");
         }
     }
 
     /**
-     * Returns true if input is exactly the command or starts with the command followed by a space.
-     */
-    private static boolean isCommand(String input, String command) {
-        return input.equals(command) || input.startsWith(command + " ");
-    }
-
-    /**
      * Returns the user's task text after the command word.
      */
-    private static String getTextAfterCommand(String input, String command) {
-        return input.substring(command.length()).trim();
+    private static String getTextAfterCommand(String input, Command command) {
+        return input.substring(command.getWord().length()).trim();
     }
 
     /**
@@ -147,7 +126,7 @@ public class Yappy {
      * Adds a todo task after checking that its description is present.
      */
     private static void addTodo(List<Task> tasks, String input) throws YappyException {
-        String description = getTextAfterCommand(input, COMMAND_TODO);
+        String description = getTextAfterCommand(input, Command.TODO);
         if (description.isEmpty()) {
             throw new YappyException("OOPS!!! The description of a todo cannot be empty.");
         }
@@ -169,7 +148,7 @@ public class Yappy {
      * Parses a deadline command and adds the resulting deadline task.
      */
     private static void addDeadline(List<Task> tasks, String input) throws YappyException {
-        String taskDetails = getTextAfterCommand(input, COMMAND_DEADLINE);
+        String taskDetails = getTextAfterCommand(input, Command.DEADLINE);
         int byIndex = taskDetails.indexOf(BY_MARKER);
 
         if (byIndex == -1) {
@@ -192,7 +171,7 @@ public class Yappy {
      * Parses an event command and adds the resulting event task.
      */
     private static void addEvent(List<Task> tasks, String input) throws YappyException {
-        String taskDetails = getTextAfterCommand(input, COMMAND_EVENT);
+        String taskDetails = getTextAfterCommand(input, Command.EVENT);
         int fromIndex = taskDetails.indexOf(FROM_MARKER);
         int toIndex = fromIndex == -1 ? -1 : taskDetails.indexOf(TO_MARKER, fromIndex + FROM_MARKER.length());
 
@@ -220,7 +199,7 @@ public class Yappy {
      * Marks the requested task as done.
      */
     private static void markTask(String input, List<Task> tasks) throws YappyException {
-        int index = parseTaskIndex(input, COMMAND_MARK, tasks.size());
+        int index = parseTaskIndex(input, Command.MARK, tasks.size());
         Task task = tasks.get(index);
         task.markAsDone();
         System.out.println("Nice! I've marked this task as done:");
@@ -231,7 +210,7 @@ public class Yappy {
      * Marks the requested task as not done yet.
      */
     private static void unmarkTask(String input, List<Task> tasks) throws YappyException {
-        int index = parseTaskIndex(input, COMMAND_UNMARK, tasks.size());
+        int index = parseTaskIndex(input, Command.UNMARK, tasks.size());
         Task task = tasks.get(index);
         task.markAsNotDone();
         System.out.println("OK, I've marked this task as not done yet:");
@@ -242,7 +221,7 @@ public class Yappy {
      * Deletes the requested task from the task list.
      */
     private static void deleteTask(String input, List<Task> tasks) throws YappyException {
-        int index = parseTaskIndex(input, COMMAND_DELETE, tasks.size());
+        int index = parseTaskIndex(input, Command.DELETE, tasks.size());
         Task removedTask = tasks.remove(index);
         System.out.println("Noted. I've removed this task:");
         System.out.println("  " + removedTask);
@@ -252,10 +231,11 @@ public class Yappy {
     /**
      * Converts the user's 1-based task number into a valid array index.
      */
-    private static int parseTaskIndex(String input, String command, int taskCount) throws YappyException {
+    private static int parseTaskIndex(String input, Command command, int taskCount) throws YappyException {
         String numberText = getTextAfterCommand(input, command);
         if (numberText.isEmpty()) {
-            throw new YappyException("OOPS!!! Please tell me which task to " + command + ", e.g. " + command + " 1.");
+            throw new YappyException("OOPS!!! Please tell me which task to "
+                    + command.getWord() + ", e.g. " + command.getWord() + " 1.");
         }
 
         int taskNumber;

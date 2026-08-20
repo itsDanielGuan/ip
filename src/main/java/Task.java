@@ -7,6 +7,7 @@ public abstract class Task {
      * Fields are protected so subclasses can format task-specific display text
      * without needing extra getter methods at this early project stage.
      */
+    protected TaskType taskType;
     protected String description;
     protected boolean isDone;
 
@@ -14,7 +15,8 @@ public abstract class Task {
      * Creates a task with the given description.
      * A newly created task always starts out as not done.
      */
-    public Task(String description) {
+    public Task(TaskType taskType, String description) {
+        this.taskType = taskType;
         this.description = description;
         this.isDone = false;
     }
@@ -42,6 +44,6 @@ public abstract class Task {
      */
     @Override
     public String toString() {
-        return "[" + getStatusIcon() + "] " + description;
+        return "[" + taskType.getIcon() + "][" + getStatusIcon() + "] " + description;
     }
 }

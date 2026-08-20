@@ -12,16 +12,16 @@ public class Event extends Task {
      * Creates an event task with the given description and time range text.
      */
     public Event(String description, String from, String to) {
-        super(description);
+        super(TaskType.EVENT, description);
         this.from = from;
         this.to = to;
     }
 
     /**
-     * Returns the event formatted with its type icon and time range text.
+     * Returns the event formatted with its time range text.
      */
     @Override
     public String toString() {
-        return "[E]" + super.toString() + " (from: " + from + " to: " + to + ")";
+        return super.toString() + " (from: " + from + " to: " + to + ")";
     }
 }
