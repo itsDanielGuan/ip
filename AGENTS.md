@@ -34,6 +34,7 @@ After each code update that affects console behavior:
 
 * Update `test/ui-test-plan.md` if the expected user-visible behavior changes.
 * Invoke the project-specific `test-ui` skill. It compiles the Java sources, runs the console commands in the test plan, and records the console session in `test/ui-test-session.md`.
+* Include incorrect-input cases in the UI test plan when changing command parsing or error handling, and check that invalid commands do not accidentally add, remove, mark, or unmark tasks.
 
 ## Git
 

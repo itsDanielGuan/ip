@@ -1,6 +1,6 @@
 # UI Test Plan
 
-These tests exercise the console behavior for Duke Level 4. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output.
+These tests exercise the console behavior for Duke Level 5. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output.
 
 ## Test Case 1: Add and List the Three Task Types
 
@@ -82,5 +82,113 @@ Got it. I've added this task:
 Now you have 1 tasks in the list.
 Here are the tasks in your list:
 1.[D][ ] do homework (by: no idea :-p)
+Bye. Hope to see you again soon!
+```
+
+## Test Case 4: Reject Unknown and Empty Todo Inputs Without Changing State
+
+Aim: Verify that empty commands, unknown commands, and empty todo descriptions report errors and do not add tasks.
+
+Commands:
+```text
+todo keep state
+
+todo
+blah
+list
+bye
+```
+
+Expected output fragments:
+```text
+Got it. I've added this task:
+  [T][ ] keep state
+Now you have 1 tasks in the list.
+OOPS!!! Please type a command.
+OOPS!!! The description of a todo cannot be empty.
+OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, or unmark.
+Here are the tasks in your list:
+1.[T][ ] keep state
+Bye. Hope to see you again soon!
+```
+
+## Test Case 5: Reject Invalid Deadline and Event Inputs Without Changing State
+
+Aim: Verify that missing or empty deadline/event fields report specific errors and only valid typed tasks are stored.
+
+Commands:
+```text
+deadline /by Friday
+deadline pay bills
+deadline pay bills /by
+deadline pay bills /by Friday
+event /from Mon /to Tue
+event meeting /from /to Tue
+event meeting /from Mon
+event meeting /from Mon /to
+event meeting /from Mon /to Tue
+list
+bye
+```
+
+Expected output fragments:
+```text
+OOPS!!! The description of a deadline cannot be empty.
+OOPS!!! Please use: deadline DESCRIPTION /by WHEN
+OOPS!!! The /by value of a deadline cannot be empty.
+Got it. I've added this task:
+  [D][ ] pay bills (by: Friday)
+Now you have 1 tasks in the list.
+OOPS!!! The description of an event cannot be empty.
+OOPS!!! The /from value of an event cannot be empty.
+OOPS!!! Please use: event DESCRIPTION /from START /to END
+OOPS!!! The /to value of an event cannot be empty.
+Got it. I've added this task:
+  [E][ ] meeting (from: Mon to: Tue)
+Now you have 2 tasks in the list.
+Here are the tasks in your list:
+1.[D][ ] pay bills (by: Friday)
+2.[E][ ] meeting (from: Mon to: Tue)
+Bye. Hope to see you again soon!
+```
+
+## Test Case 6: Reject Invalid Mark and Unmark Inputs Without Changing State
+
+Aim: Verify that missing, non-numeric, and out-of-range task numbers report errors and do not change task status.
+
+Commands:
+```text
+mark 1
+todo alpha
+mark
+mark two
+mark 5
+mark 1
+unmark
+unmark 0
+unmark one
+unmark 1
+list
+bye
+```
+
+Expected output fragments:
+```text
+OOPS!!! There are no tasks in the list yet.
+Got it. I've added this task:
+  [T][ ] alpha
+Now you have 1 tasks in the list.
+OOPS!!! Please tell me which task to mark, e.g. mark 1.
+OOPS!!! Task numbers must be whole numbers.
+OOPS!!! Task number must be between 1 and 1.
+Nice! I've marked this task as done:
+  [T][X] alpha
+OOPS!!! Please tell me which task to unmark, e.g. unmark 1.
+OOPS!!! Task number must be between 1 and 1.
+OOPS!!! Task numbers must be whole numbers.
+OK, I've marked this task as not done yet:
+  [T][ ] alpha
+Here are the tasks in your list:
+1.[T][ ] alpha
 Bye. Hope to see you again soon!
 ```
