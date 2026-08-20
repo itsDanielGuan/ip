@@ -18,6 +18,9 @@ public class Yappy {
     /** Command that lists everything stored so far. */
     private static final String COMMAND_LIST = "list";
 
+    /** Command that marks a task as done, e.g. "mark 2". */
+    private static final String COMMAND_MARK = "mark";
+
     /** Maximum number of items the bot can remember, as set by the requirements. */
     private static final int MAX_TASKS = 100;
 
@@ -36,9 +39,10 @@ public class Yappy {
         System.out.println("What can I do for you?");
         System.out.println(DIVIDER);
 
-        // A fixed-size array is enough here: the requirements cap the list at 100 items.
+        // Two parallel arrays: tasks[i] holds the description and isDone[i] its status.
         // taskCount tracks how many slots are actually filled.
         String[] tasks = new String[MAX_TASKS];
+        boolean[] isDone = new boolean[MAX_TASKS];
         int taskCount = 0;
 
         // Scanner reads the user's input from the keyboard (System.in), one line at a time.
@@ -55,10 +59,17 @@ public class Yappy {
 
             System.out.println(DIVIDER);
             if (input.equals(COMMAND_LIST)) {
+                System.out.println("Here are the tasks in your list:");
                 // The numbering shown to the user starts at 1, while the array is 0-indexed.
                 for (int i = 0; i < taskCount; i++) {
-                    System.out.println((i + 1) + ". " + tasks[i]);
+                    System.out.println((i + 1) + ".[" + statusIcon(isDone[i]) + "] " + tasks[i]);
                 }
+            } else if (input.startsWith(COMMAND_MARK + " ")) {
+                // Convert the number the user typed into the matching array index.
+                int index = Integer.parseInt(input.substring(COMMAND_MARK.length()).trim()) - 1;
+                isDone[index] = true;
+                System.out.println("Nice! I've marked this task as done:");
+                System.out.println("  [" + statusIcon(isDone[index]) + "] " + tasks[index]);
             } else if (taskCount < MAX_TASKS) {
                 tasks[taskCount] = input;
                 taskCount++;
@@ -72,5 +83,13 @@ public class Yappy {
         System.out.println(DIVIDER);
         System.out.println("Bye. Hope to see you again soon!");
         System.out.println(DIVIDER);
+    }
+
+    /**
+     * Returns the icon shown inside the status brackets of a task:
+     * "X" when the task is done, a blank space when it is not.
+     */
+    private static String statusIcon(boolean isDone) {
+        return isDone ? "X" : " ";
     }
 }
