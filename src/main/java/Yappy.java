@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -24,6 +26,9 @@ public class Yappy {
     /** Command that reverses a task back to not done, e.g. "unmark 2". */
     private static final String COMMAND_UNMARK = "unmark";
 
+    /** Command that deletes a task, e.g. "delete 2". */
+    private static final String COMMAND_DELETE = "delete";
+
     /** Command that adds a todo task, e.g. "todo borrow book". */
     private static final String COMMAND_TODO = "todo";
 
@@ -42,9 +47,6 @@ public class Yappy {
     /** Marker separating an event start text from its end text. */
     private static final String TO_MARKER = "/to";
 
-    /** Maximum number of items the bot can remember, as set by the requirements. */
-    private static final int MAX_TASKS = 100;
-
     public static void main(String[] args) {
         // ASCII art logo. Each backslash is doubled, since backslash is the Java escape character.
         String banner = "__   __                            \n"
@@ -60,10 +62,8 @@ public class Yappy {
         System.out.println("What can I do for you?");
         System.out.println(DIVIDER);
 
-        // The array type is Task, but each item is one of its subclasses.
-        // taskCount tracks how many slots are actually filled.
-        Task[] tasks = new Task[MAX_TASKS];
-        int taskCount = 0;
+        // ArrayList grows as tasks are added and makes deletion straightforward.
+        List<Task> tasks = new ArrayList<>();
 
         // Scanner reads the user's input from the keyboard (System.in), one line at a time.
         Scanner scanner = new Scanner(System.in);
@@ -79,7 +79,7 @@ public class Yappy {
 
             System.out.println(DIVIDER);
             try {
-                taskCount = processInput(input, tasks, taskCount);
+                processInput(input, tasks);
             } catch (YappyException e) {
                 System.out.println(e.getMessage());
             }
@@ -92,30 +92,29 @@ public class Yappy {
     }
 
     /**
-     * Runs one non-bye command and returns the updated task count.
+     * Runs one non-bye command.
      */
-    private static int processInput(String input, Task[] tasks, int taskCount) throws YappyException {
+    private static void processInput(String input, List<Task> tasks) throws YappyException {
         if (input.isEmpty()) {
             throw new YappyException("OOPS!!! Please type a command.");
         }
 
         if (input.equals(COMMAND_LIST)) {
-            printTaskList(tasks, taskCount);
-            return taskCount;
+            printTaskList(tasks);
         } else if (isCommand(input, COMMAND_MARK)) {
-            markTask(input, tasks, taskCount);
-            return taskCount;
+            markTask(input, tasks);
         } else if (isCommand(input, COMMAND_UNMARK)) {
-            unmarkTask(input, tasks, taskCount);
-            return taskCount;
+            unmarkTask(input, tasks);
+        } else if (isCommand(input, COMMAND_DELETE)) {
+            deleteTask(input, tasks);
         } else if (isCommand(input, COMMAND_TODO)) {
-            return addTodo(tasks, taskCount, input);
+            addTodo(tasks, input);
         } else if (isCommand(input, COMMAND_DEADLINE)) {
-            return addDeadline(tasks, taskCount, input);
+            addDeadline(tasks, input);
         } else if (isCommand(input, COMMAND_EVENT)) {
-            return addEvent(tasks, taskCount, input);
+            addEvent(tasks, input);
         } else {
-            throw new YappyException("OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, or unmark.");
+            throw new YappyException("OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, unmark, or delete.");
         }
     }
 
@@ -136,46 +135,40 @@ public class Yappy {
     /**
      * Prints all stored tasks in their current order.
      */
-    private static void printTaskList(Task[] tasks, int taskCount) {
+    private static void printTaskList(List<Task> tasks) {
         System.out.println("Here are the tasks in your list:");
-        // The numbering shown to the user starts at 1, while the array is 0-indexed.
-        for (int i = 0; i < taskCount; i++) {
-            System.out.println((i + 1) + "." + tasks[i]);
+        // The numbering shown to the user starts at 1, while ArrayList is 0-indexed.
+        for (int i = 0; i < tasks.size(); i++) {
+            System.out.println((i + 1) + "." + tasks.get(i));
         }
     }
 
     /**
      * Adds a todo task after checking that its description is present.
      */
-    private static int addTodo(Task[] tasks, int taskCount, String input) throws YappyException {
+    private static void addTodo(List<Task> tasks, String input) throws YappyException {
         String description = getTextAfterCommand(input, COMMAND_TODO);
         if (description.isEmpty()) {
             throw new YappyException("OOPS!!! The description of a todo cannot be empty.");
         }
 
-        return addTask(tasks, taskCount, new Todo(description));
+        addTask(tasks, new Todo(description));
     }
 
     /**
-     * Adds the given task if there is space in the task list.
+     * Adds the given task to the task list.
      */
-    private static int addTask(Task[] tasks, int taskCount, Task task) throws YappyException {
-        if (taskCount >= MAX_TASKS) {
-            throw new YappyException("OOPS!!! I can only remember " + MAX_TASKS + " tasks.");
-        }
-
-        tasks[taskCount] = task;
-        int newTaskCount = taskCount + 1;
+    private static void addTask(List<Task> tasks, Task task) {
+        tasks.add(task);
         System.out.println("Got it. I've added this task:");
         System.out.println("  " + task);
-        System.out.println("Now you have " + newTaskCount + " tasks in the list.");
-        return newTaskCount;
+        System.out.println("Now you have " + tasks.size() + " tasks in the list.");
     }
 
     /**
      * Parses a deadline command and adds the resulting deadline task.
      */
-    private static int addDeadline(Task[] tasks, int taskCount, String input) throws YappyException {
+    private static void addDeadline(List<Task> tasks, String input) throws YappyException {
         String taskDetails = getTextAfterCommand(input, COMMAND_DEADLINE);
         int byIndex = taskDetails.indexOf(BY_MARKER);
 
@@ -192,13 +185,13 @@ public class Yappy {
             throw new YappyException("OOPS!!! The /by value of a deadline cannot be empty.");
         }
 
-        return addTask(tasks, taskCount, new Deadline(description, by));
+        addTask(tasks, new Deadline(description, by));
     }
 
     /**
      * Parses an event command and adds the resulting event task.
      */
-    private static int addEvent(Task[] tasks, int taskCount, String input) throws YappyException {
+    private static void addEvent(List<Task> tasks, String input) throws YappyException {
         String taskDetails = getTextAfterCommand(input, COMMAND_EVENT);
         int fromIndex = taskDetails.indexOf(FROM_MARKER);
         int toIndex = fromIndex == -1 ? -1 : taskDetails.indexOf(TO_MARKER, fromIndex + FROM_MARKER.length());
@@ -220,27 +213,40 @@ public class Yappy {
             throw new YappyException("OOPS!!! The /to value of an event cannot be empty.");
         }
 
-        return addTask(tasks, taskCount, new Event(description, from, to));
+        addTask(tasks, new Event(description, from, to));
     }
 
     /**
      * Marks the requested task as done.
      */
-    private static void markTask(String input, Task[] tasks, int taskCount) throws YappyException {
-        int index = parseTaskIndex(input, COMMAND_MARK, taskCount);
-        tasks[index].markAsDone();
+    private static void markTask(String input, List<Task> tasks) throws YappyException {
+        int index = parseTaskIndex(input, COMMAND_MARK, tasks.size());
+        Task task = tasks.get(index);
+        task.markAsDone();
         System.out.println("Nice! I've marked this task as done:");
-        System.out.println("  " + tasks[index]);
+        System.out.println("  " + task);
     }
 
     /**
      * Marks the requested task as not done yet.
      */
-    private static void unmarkTask(String input, Task[] tasks, int taskCount) throws YappyException {
-        int index = parseTaskIndex(input, COMMAND_UNMARK, taskCount);
-        tasks[index].markAsNotDone();
+    private static void unmarkTask(String input, List<Task> tasks) throws YappyException {
+        int index = parseTaskIndex(input, COMMAND_UNMARK, tasks.size());
+        Task task = tasks.get(index);
+        task.markAsNotDone();
         System.out.println("OK, I've marked this task as not done yet:");
-        System.out.println("  " + tasks[index]);
+        System.out.println("  " + task);
+    }
+
+    /**
+     * Deletes the requested task from the task list.
+     */
+    private static void deleteTask(String input, List<Task> tasks) throws YappyException {
+        int index = parseTaskIndex(input, COMMAND_DELETE, tasks.size());
+        Task removedTask = tasks.remove(index);
+        System.out.println("Noted. I've removed this task:");
+        System.out.println("  " + removedTask);
+        System.out.println("Now you have " + tasks.size() + " tasks in the list.");
     }
 
     /**

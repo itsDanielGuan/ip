@@ -1,6 +1,6 @@
 # UI Test Plan
 
-These tests exercise the console behavior for Duke Level 5. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output.
+These tests exercise the console behavior for Duke Level 6. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output.
 
 ## Test Case 1: Add and List the Three Task Types
 
@@ -106,7 +106,7 @@ Got it. I've added this task:
 Now you have 1 tasks in the list.
 OOPS!!! Please type a command.
 OOPS!!! The description of a todo cannot be empty.
-OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, or unmark.
+OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, unmark, or delete.
 Here are the tasks in your list:
 1.[T][ ] keep state
 Bye. Hope to see you again soon!
@@ -188,6 +188,90 @@ OOPS!!! Task number must be between 1 and 1.
 OOPS!!! Task numbers must be whole numbers.
 OK, I've marked this task as not done yet:
   [T][ ] alpha
+Here are the tasks in your list:
+1.[T][ ] alpha
+Bye. Hope to see you again soon!
+```
+
+## Test Case 7: Delete Tasks and Renumber the List
+
+Aim: Verify that deleting a task removes the correct item and the remaining tasks keep their relative order with updated numbering.
+
+Commands:
+```text
+todo read book
+deadline return book /by Sunday
+event project meeting /from Mon 2pm /to 4pm
+todo borrow book
+delete 3
+list
+delete 1
+list
+bye
+```
+
+Expected output fragments:
+```text
+Got it. I've added this task:
+  [T][ ] read book
+Got it. I've added this task:
+  [D][ ] return book (by: Sunday)
+Got it. I've added this task:
+  [E][ ] project meeting (from: Mon 2pm to: 4pm)
+Got it. I've added this task:
+  [T][ ] borrow book
+Noted. I've removed this task:
+  [E][ ] project meeting (from: Mon 2pm to: 4pm)
+Now you have 3 tasks in the list.
+Here are the tasks in your list:
+1.[T][ ] read book
+2.[D][ ] return book (by: Sunday)
+3.[T][ ] borrow book
+Noted. I've removed this task:
+  [T][ ] read book
+Now you have 2 tasks in the list.
+Here are the tasks in your list:
+1.[D][ ] return book (by: Sunday)
+2.[T][ ] borrow book
+Bye. Hope to see you again soon!
+```
+
+## Test Case 8: Reject Invalid Delete Inputs Without Changing State
+
+Aim: Verify that missing, non-numeric, empty-list, and out-of-range delete commands report errors and do not remove tasks.
+
+Commands:
+```text
+delete 1
+todo alpha
+todo beta
+delete
+delete two
+delete 0
+delete 3
+list
+delete 2
+list
+bye
+```
+
+Expected output fragments:
+```text
+OOPS!!! There are no tasks in the list yet.
+Got it. I've added this task:
+  [T][ ] alpha
+Got it. I've added this task:
+  [T][ ] beta
+OOPS!!! Please tell me which task to delete, e.g. delete 1.
+OOPS!!! Task numbers must be whole numbers.
+OOPS!!! Task number must be between 1 and 2.
+OOPS!!! Task number must be between 1 and 2.
+Here are the tasks in your list:
+1.[T][ ] alpha
+2.[T][ ] beta
+Noted. I've removed this task:
+  [T][ ] beta
+Now you have 1 tasks in the list.
 Here are the tasks in your list:
 1.[T][ ] alpha
 Bye. Hope to see you again soon!
