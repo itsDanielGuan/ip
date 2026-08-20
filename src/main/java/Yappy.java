@@ -2,8 +2,8 @@ import java.util.Scanner;
 
 /**
  * Entry point of the Yappy chatbot.
- * At this stage the bot stores each line the user types as a Task, lists
- * them back, marks them done or not done, and exits on the "bye" command.
+ * At this stage the bot stores todos, deadlines, and events, lists them back,
+ * marks them done or not done, and exits on the "bye" command.
  */
 public class Yappy {
     /** Name the chatbot introduces itself with. */
@@ -24,6 +24,24 @@ public class Yappy {
     /** Command that reverses a task back to not done, e.g. "unmark 2". */
     private static final String COMMAND_UNMARK = "unmark";
 
+    /** Command that adds a todo task, e.g. "todo borrow book". */
+    private static final String COMMAND_TODO = "todo";
+
+    /** Command that adds a deadline task, e.g. "deadline return book /by Sunday". */
+    private static final String COMMAND_DEADLINE = "deadline";
+
+    /** Command that adds an event task, e.g. "event meeting /from Mon 2pm /to 4pm". */
+    private static final String COMMAND_EVENT = "event";
+
+    /** Marker separating a deadline description from its deadline text. */
+    private static final String BY_MARKER = "/by";
+
+    /** Marker separating an event description from its start text. */
+    private static final String FROM_MARKER = "/from";
+
+    /** Marker separating an event start text from its end text. */
+    private static final String TO_MARKER = "/to";
+
     /** Maximum number of items the bot can remember, as set by the requirements. */
     private static final int MAX_TASKS = 100;
 
@@ -42,8 +60,7 @@ public class Yappy {
         System.out.println("What can I do for you?");
         System.out.println(DIVIDER);
 
-        // Each Task carries its own description and done-status, so a single
-        // array replaces the parallel tasks/isDone arrays used before.
+        // The array type is Task, but each item is one of its subclasses.
         // taskCount tracks how many slots are actually filled.
         Task[] tasks = new Task[MAX_TASKS];
         int taskCount = 0;
@@ -78,12 +95,14 @@ public class Yappy {
                 tasks[index].markAsNotDone();
                 System.out.println("OK, I've marked this task as not done yet:");
                 System.out.println("  " + tasks[index]);
-            } else if (taskCount < MAX_TASKS) {
-                tasks[taskCount] = new Task(input);
-                taskCount++;
-                System.out.println("added: " + input);
+            } else if (input.startsWith(COMMAND_TODO + " ")) {
+                taskCount = addTask(tasks, taskCount, new Todo(getTextAfterCommand(input, COMMAND_TODO)));
+            } else if (input.startsWith(COMMAND_DEADLINE + " ")) {
+                taskCount = addDeadline(tasks, taskCount, input);
+            } else if (input.startsWith(COMMAND_EVENT + " ")) {
+                taskCount = addEvent(tasks, taskCount, input);
             } else {
-                System.out.println("Sorry, I can only remember " + MAX_TASKS + " items.");
+                System.out.println("Sorry, I don't know what that means.");
             }
             System.out.println(DIVIDER);
         }
@@ -91,5 +110,65 @@ public class Yappy {
         System.out.println(DIVIDER);
         System.out.println("Bye. Hope to see you again soon!");
         System.out.println(DIVIDER);
+    }
+
+    /**
+     * Returns the user's task text after the command word.
+     */
+    private static String getTextAfterCommand(String input, String command) {
+        return input.substring(command.length()).trim();
+    }
+
+    /**
+     * Adds the given task if there is space in the task list.
+     */
+    private static int addTask(Task[] tasks, int taskCount, Task task) {
+        if (taskCount >= MAX_TASKS) {
+            System.out.println("Sorry, I can only remember " + MAX_TASKS + " items.");
+            return taskCount;
+        }
+
+        tasks[taskCount] = task;
+        int newTaskCount = taskCount + 1;
+        System.out.println("Got it. I've added this task:");
+        System.out.println("  " + task);
+        System.out.println("Now you have " + newTaskCount + " tasks in the list.");
+        return newTaskCount;
+    }
+
+    /**
+     * Parses a deadline command and adds the resulting deadline task.
+     */
+    private static int addDeadline(Task[] tasks, int taskCount, String input) {
+        String taskDetails = getTextAfterCommand(input, COMMAND_DEADLINE);
+        int byIndex = taskDetails.indexOf(BY_MARKER);
+
+        if (byIndex == -1) {
+            System.out.println("Please use: deadline DESCRIPTION /by WHEN");
+            return taskCount;
+        }
+
+        String description = taskDetails.substring(0, byIndex).trim();
+        String by = taskDetails.substring(byIndex + BY_MARKER.length()).trim();
+        return addTask(tasks, taskCount, new Deadline(description, by));
+    }
+
+    /**
+     * Parses an event command and adds the resulting event task.
+     */
+    private static int addEvent(Task[] tasks, int taskCount, String input) {
+        String taskDetails = getTextAfterCommand(input, COMMAND_EVENT);
+        int fromIndex = taskDetails.indexOf(FROM_MARKER);
+        int toIndex = taskDetails.indexOf(TO_MARKER);
+
+        if (fromIndex == -1 || toIndex == -1 || fromIndex > toIndex) {
+            System.out.println("Please use: event DESCRIPTION /from START /to END");
+            return taskCount;
+        }
+
+        String description = taskDetails.substring(0, fromIndex).trim();
+        String from = taskDetails.substring(fromIndex + FROM_MARKER.length(), toIndex).trim();
+        String to = taskDetails.substring(toIndex + TO_MARKER.length()).trim();
+        return addTask(tasks, taskCount, new Event(description, from, to));
     }
 }

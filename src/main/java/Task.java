@@ -1,12 +1,11 @@
 /**
- * Represents a single task the user has asked the chatbot to remember.
- * A task bundles its description together with whether it is done,
- * replacing the two parallel arrays used earlier.
+ * Represents a task the user has asked the chatbot to remember.
+ * Subclasses add the task type and any extra timing information.
  */
-public class Task {
+public abstract class Task {
     /**
-     * Fields are protected rather than private so that future subclasses
-     * (e.g. Todo, Deadline, Event) can access them directly.
+     * Fields are protected so subclasses can format task-specific display text
+     * without needing extra getter methods at this early project stage.
      */
     protected String description;
     protected boolean isDone;
@@ -36,7 +35,8 @@ public class Task {
     }
 
     /**
-     * Returns the task formatted for display, e.g. "[X] read book".
+     * Returns the task status and description, e.g. "[X] read book".
+     * Subclasses prepend their type icon and append any extra details.
      * Java calls toString() automatically when a Task is used where a
      * String is expected, such as in string concatenation.
      */
