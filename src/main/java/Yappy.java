@@ -21,6 +21,9 @@ public class Yappy {
     /** Command that marks a task as done, e.g. "mark 2". */
     private static final String COMMAND_MARK = "mark";
 
+    /** Command that reverses a task back to not done, e.g. "unmark 2". */
+    private static final String COMMAND_UNMARK = "unmark";
+
     /** Maximum number of items the bot can remember, as set by the requirements. */
     private static final int MAX_TASKS = 100;
 
@@ -69,6 +72,11 @@ public class Yappy {
                 int index = Integer.parseInt(input.substring(COMMAND_MARK.length()).trim()) - 1;
                 isDone[index] = true;
                 System.out.println("Nice! I've marked this task as done:");
+                System.out.println("  [" + statusIcon(isDone[index]) + "] " + tasks[index]);
+            } else if (input.startsWith(COMMAND_UNMARK + " ")) {
+                int index = Integer.parseInt(input.substring(COMMAND_UNMARK.length()).trim()) - 1;
+                isDone[index] = false;
+                System.out.println("OK, I've marked this task as not done yet:");
                 System.out.println("  [" + statusIcon(isDone[index]) + "] " + tasks[index]);
             } else if (taskCount < MAX_TASKS) {
                 tasks[taskCount] = input;
