@@ -50,7 +50,7 @@ function Assert-FragmentsInOrder {
     }
 }
 
-$sources = Get-ChildItem -Path "src/main/java" -Filter "*.java" | ForEach-Object { $_.FullName }
+$sources = Get-ChildItem -Path "src/main/java" -Filter "*.java" -Recurse | ForEach-Object { $_.FullName }
 & javac -d bin $sources
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
@@ -79,7 +79,7 @@ foreach ($caseMatch in $caseMatches) {
 
     Remove-Item -LiteralPath $DataPath -Force -ErrorAction SilentlyContinue
     $inputText = $commands.TrimEnd() + "`n"
-    $actual = $inputText | & java -cp bin Yappy
+    $actual = $inputText | & java -cp bin yappy.Yappy
     $actualText = ($actual -join "`n")
     $combinedActualText = $actualText
 
@@ -93,7 +93,7 @@ foreach ($caseMatch in $caseMatches) {
     if ($restartMatch.Success) {
         $restartCommands = $restartMatch.Groups[1].Value.Trim()
         $restartInputText = $restartCommands.TrimEnd() + "`n"
-        $restartActual = $restartInputText | & java -cp bin Yappy
+        $restartActual = $restartInputText | & java -cp bin yappy.Yappy
         $restartActualText = ($restartActual -join "`n")
         $combinedActualText = $actualText + "`n" + $restartActualText
     }

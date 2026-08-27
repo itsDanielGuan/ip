@@ -1,3 +1,5 @@
+package yappy.storage;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -7,6 +9,12 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+
+import yappy.task.Deadline;
+import yappy.task.Event;
+import yappy.task.Task;
+import yappy.task.TaskList;
+import yappy.task.Todo;
 
 /**
  * Loads and saves Yappy tasks using a text file on disk.

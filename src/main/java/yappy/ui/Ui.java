@@ -1,4 +1,9 @@
+package yappy.ui;
+
 import java.util.Scanner;
+
+import yappy.task.Task;
+import yappy.task.TaskList;
 
 /**
  * Handles all console input and output for Yappy.
