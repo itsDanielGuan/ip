@@ -1,6 +1,6 @@
 # UI Test Plan
 
-These tests exercise the console behavior through Duke Level 7. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output. Each test case starts with an empty data file unless it explicitly restarts Yappy.
+These tests exercise the console behavior through Duke Level 8. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output. Each test case starts with an empty data file unless it explicitly restarts Yappy.
 
 ## Test Case 1: Add and List the Three Task Types
 
@@ -9,8 +9,8 @@ Aim: Verify that todos, deadlines, and events are added with the correct type ic
 Commands:
 ```text
 todo borrow book
-deadline return book /by Sunday
-event project meeting /from Mon 2pm /to 4pm
+deadline return book /by 2026-08-30
+event project meeting /from 2026-08-31 /to 2026-09-01
 list
 bye
 ```
@@ -21,15 +21,15 @@ Got it. I've added this task:
   [T][ ] borrow book
 Now you have 1 tasks in the list.
 Got it. I've added this task:
-  [D][ ] return book (by: Sunday)
+  [D][ ] return book (by: Aug 30 2026)
 Now you have 2 tasks in the list.
 Got it. I've added this task:
-  [E][ ] project meeting (from: Mon 2pm to: 4pm)
+  [E][ ] project meeting (from: Aug 31 2026 to: Sep 01 2026)
 Now you have 3 tasks in the list.
 Here are the tasks in your list:
 1.[T][ ] borrow book
-2.[D][ ] return book (by: Sunday)
-3.[E][ ] project meeting (from: Mon 2pm to: 4pm)
+2.[D][ ] return book (by: Aug 30 2026)
+3.[E][ ] project meeting (from: Aug 31 2026 to: Sep 01 2026)
 Bye. Hope to see you again soon!
 ```
 
@@ -40,8 +40,8 @@ Aim: Verify that inherited done-status behavior works for todo, deadline, and ev
 Commands:
 ```text
 todo read book
-deadline submit report /by 11/10/2019 5pm
-event orientation week /from 4/10/2019 /to 11/10/2019
+deadline submit report /by 2019-10-11
+event orientation week /from 2019-10-04 /to 2019-10-11
 mark 2
 unmark 2
 mark 3
@@ -52,25 +52,25 @@ bye
 Expected output fragments:
 ```text
 Nice! I've marked this task as done:
-  [D][X] submit report (by: 11/10/2019 5pm)
+  [D][X] submit report (by: Oct 11 2019)
 OK, I've marked this task as not done yet:
-  [D][ ] submit report (by: 11/10/2019 5pm)
+  [D][ ] submit report (by: Oct 11 2019)
 Nice! I've marked this task as done:
-  [E][X] orientation week (from: 4/10/2019 to: 11/10/2019)
+  [E][X] orientation week (from: Oct 04 2019 to: Oct 11 2019)
 Here are the tasks in your list:
 1.[T][ ] read book
-2.[D][ ] submit report (by: 11/10/2019 5pm)
-3.[E][X] orientation week (from: 4/10/2019 to: 11/10/2019)
+2.[D][ ] submit report (by: Oct 11 2019)
+3.[E][X] orientation week (from: Oct 04 2019 to: Oct 11 2019)
 Bye. Hope to see you again soon!
 ```
 
-## Test Case 3: Keep Deadline Date/Time as Raw Text
+## Test Case 3: Parse and Format Deadline Dates
 
-Aim: Verify that deadline date/time text is stored and printed exactly as typed, without date parsing.
+Aim: Verify that a valid ISO deadline date is stored as a date and displayed in a friendlier format.
 
 Commands:
 ```text
-deadline do homework /by no idea :-p
+deadline do homework /by 2019-12-02
 list
 bye
 ```
@@ -78,10 +78,10 @@ bye
 Expected output fragments:
 ```text
 Got it. I've added this task:
-  [D][ ] do homework (by: no idea :-p)
+  [D][ ] do homework (by: Dec 02 2019)
 Now you have 1 tasks in the list.
 Here are the tasks in your list:
-1.[D][ ] do homework (by: no idea :-p)
+1.[D][ ] do homework (by: Dec 02 2019)
 Bye. Hope to see you again soon!
 ```
 
@@ -118,15 +118,20 @@ Aim: Verify that missing or empty deadline/event fields report specific errors a
 
 Commands:
 ```text
-deadline /by Friday
+deadline /by 2026-08-29
 deadline pay bills
 deadline pay bills /by
 deadline pay bills /by Friday
-event /from Mon /to Tue
-event meeting /from /to Tue
-event meeting /from Mon
-event meeting /from Mon /to
-event meeting /from Mon /to Tue
+deadline pay bills /by 2026-02-30
+deadline pay bills /by 2026-08-29
+event /from 2026-08-30 /to 2026-08-31
+event meeting /from /to 2026-08-31
+event meeting /from 2026-08-30
+event meeting /from 2026-08-30 /to
+event meeting /from Monday /to 2026-08-31
+event meeting /from 2026-08-30 /to Tuesday
+event meeting /from 2026-08-31 /to 2026-08-30
+event meeting /from 2026-08-30 /to 2026-08-31
 list
 bye
 ```
@@ -136,19 +141,24 @@ Expected output fragments:
 OOPS!!! The description of a deadline cannot be empty.
 OOPS!!! Please use: deadline DESCRIPTION /by WHEN
 OOPS!!! The /by value of a deadline cannot be empty.
+OOPS!!! Please enter the /by date as yyyy-MM-dd, e.g. 2019-10-15.
+OOPS!!! Please enter the /by date as yyyy-MM-dd, e.g. 2019-10-15.
 Got it. I've added this task:
-  [D][ ] pay bills (by: Friday)
+  [D][ ] pay bills (by: Aug 29 2026)
 Now you have 1 tasks in the list.
 OOPS!!! The description of an event cannot be empty.
 OOPS!!! The /from value of an event cannot be empty.
 OOPS!!! Please use: event DESCRIPTION /from START /to END
 OOPS!!! The /to value of an event cannot be empty.
+OOPS!!! Please enter the /from date as yyyy-MM-dd, e.g. 2019-10-15.
+OOPS!!! Please enter the /to date as yyyy-MM-dd, e.g. 2019-10-15.
+OOPS!!! An event's /to date cannot be before its /from date.
 Got it. I've added this task:
-  [E][ ] meeting (from: Mon to: Tue)
+  [E][ ] meeting (from: Aug 30 2026 to: Aug 31 2026)
 Now you have 2 tasks in the list.
 Here are the tasks in your list:
-1.[D][ ] pay bills (by: Friday)
-2.[E][ ] meeting (from: Mon to: Tue)
+1.[D][ ] pay bills (by: Aug 29 2026)
+2.[E][ ] meeting (from: Aug 30 2026 to: Aug 31 2026)
 Bye. Hope to see you again soon!
 ```
 
@@ -200,8 +210,8 @@ Aim: Verify that deleting a task removes the correct item and the remaining task
 Commands:
 ```text
 todo read book
-deadline return book /by Sunday
-event project meeting /from Mon 2pm /to 4pm
+deadline return book /by 2026-08-30
+event project meeting /from 2026-08-31 /to 2026-09-01
 todo borrow book
 delete 3
 list
@@ -215,23 +225,23 @@ Expected output fragments:
 Got it. I've added this task:
   [T][ ] read book
 Got it. I've added this task:
-  [D][ ] return book (by: Sunday)
+  [D][ ] return book (by: Aug 30 2026)
 Got it. I've added this task:
-  [E][ ] project meeting (from: Mon 2pm to: 4pm)
+  [E][ ] project meeting (from: Aug 31 2026 to: Sep 01 2026)
 Got it. I've added this task:
   [T][ ] borrow book
 Noted. I've removed this task:
-  [E][ ] project meeting (from: Mon 2pm to: 4pm)
+  [E][ ] project meeting (from: Aug 31 2026 to: Sep 01 2026)
 Now you have 3 tasks in the list.
 Here are the tasks in your list:
 1.[T][ ] read book
-2.[D][ ] return book (by: Sunday)
+2.[D][ ] return book (by: Aug 30 2026)
 3.[T][ ] borrow book
 Noted. I've removed this task:
   [T][ ] read book
 Now you have 2 tasks in the list.
 Here are the tasks in your list:
-1.[D][ ] return book (by: Sunday)
+1.[D][ ] return book (by: Aug 30 2026)
 2.[T][ ] borrow book
 Bye. Hope to see you again soon!
 ```
@@ -284,7 +294,7 @@ Aim: Verify that tasks and their completion status survive an application restar
 Commands:
 ```text
 todo write report
-deadline submit report /by Friday
+deadline submit report /by 2026-08-29
 mark 2
 bye
 ```
@@ -301,13 +311,13 @@ Expected output fragments:
 Got it. I've added this task:
   [T][ ] write report
 Got it. I've added this task:
-  [D][ ] submit report (by: Friday)
+  [D][ ] submit report (by: Aug 29 2026)
 Nice! I've marked this task as done:
-  [D][X] submit report (by: Friday)
+  [D][X] submit report (by: Aug 29 2026)
 Bye. Hope to see you again soon!
 Here are the tasks in your list:
 1.[T][ ] write report
-2.[D][X] submit report (by: Friday)
+2.[D][X] submit report (by: Aug 29 2026)
 Noted. I've removed this task:
   [T][ ] write report
 Now you have 1 tasks in the list.

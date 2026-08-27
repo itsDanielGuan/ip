@@ -3,6 +3,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -176,11 +178,12 @@ public class Yappy {
             break;
         case "D":
             requireFieldCount(fields, 4);
-            task = new Deadline(decodeDescription(fields[2]), decode(fields[3]));
+            task = new Deadline(decodeDescription(fields[2]), parseStoredDate(fields[3]));
             break;
         case "E":
             requireFieldCount(fields, 5);
-            task = new Event(decodeDescription(fields[2]), decode(fields[3]), decode(fields[4]));
+            task = new Event(decodeDescription(fields[2]), parseStoredDate(fields[3]),
+                    parseStoredDate(fields[4]));
             break;
         default:
             throw new IllegalArgumentException("Unknown task type");
@@ -217,6 +220,17 @@ public class Yappy {
             throw new IllegalArgumentException("Empty task description");
         }
         return description;
+    }
+
+    /**
+     * Parses an ISO date stored in a Base64 data-file field.
+     */
+    private static LocalDate parseStoredDate(String text) {
+        try {
+            return LocalDate.parse(decode(text));
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid stored date", e);
+        }
     }
 
     /**
@@ -295,7 +309,7 @@ public class Yappy {
             throw new YappyException("OOPS!!! The /by value of a deadline cannot be empty.");
         }
 
-        addTask(tasks, new Deadline(description, by));
+        addTask(tasks, new Deadline(description, parseDate(by, BY_MARKER)));
     }
 
     /**
@@ -323,7 +337,25 @@ public class Yappy {
             throw new YappyException("OOPS!!! The /to value of an event cannot be empty.");
         }
 
-        addTask(tasks, new Event(description, from, to));
+        LocalDate fromDate = parseDate(from, FROM_MARKER);
+        LocalDate toDate = parseDate(to, TO_MARKER);
+        if (toDate.isBefore(fromDate)) {
+            throw new YappyException("OOPS!!! An event's /to date cannot be before its /from date.");
+        }
+
+        addTask(tasks, new Event(description, fromDate, toDate));
+    }
+
+    /**
+     * Parses a user-entered ISO date and reports a command-specific error when invalid.
+     */
+    private static LocalDate parseDate(String dateText, String marker) throws YappyException {
+        try {
+            return LocalDate.parse(dateText);
+        } catch (DateTimeParseException e) {
+            throw new YappyException("OOPS!!! Please enter the " + marker
+                    + " date as yyyy-MM-dd, e.g. 2019-10-15.");
+        }
     }
 
     /**
