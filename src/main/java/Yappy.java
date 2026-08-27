@@ -1,13 +1,8 @@
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -49,7 +44,18 @@ public class Yappy {
         System.out.println("What can I do for you?");
         System.out.println(DIVIDER);
 
-        TaskList tasks = new TaskList(loadTasks(DATA_FILE));
+        Storage storage = new Storage(DATA_FILE);
+        TaskList tasks;
+        try {
+            tasks = new TaskList(storage.load());
+            if (storage.getSkippedRecordCount() > 0) {
+                System.out.println("OOPS!!! I skipped " + storage.getSkippedRecordCount()
+                        + " invalid saved task record(s).");
+            }
+        } catch (IOException e) {
+            System.out.println("OOPS!!! I could not load your saved tasks. Starting with an empty list.");
+            tasks = new TaskList();
+        }
 
         // Scanner reads the user's input from the keyboard (System.in), one line at a time.
         Scanner scanner = new Scanner(System.in);
@@ -68,7 +74,7 @@ public class Yappy {
             try {
                 boolean taskListChanged = processInput(input, tasks);
                 if (taskListChanged) {
-                    saveTasks(tasks, DATA_FILE);
+                    storage.save(tasks);
                 }
             } catch (YappyException e) {
                 System.out.println(e.getMessage());
@@ -117,136 +123,6 @@ public class Yappy {
         default:
             throw new YappyException("OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, unmark, or delete.");
         }
-    }
-
-    /**
-     * Loads all valid task records from the data file.
-     * A missing file represents a user who has not saved any tasks yet.
-     */
-    private static List<Task> loadTasks(Path dataFile) {
-        List<Task> tasks = new ArrayList<>();
-        if (Files.notExists(dataFile)) {
-            return tasks;
-        }
-
-        int skippedRecords = 0;
-        try {
-            for (String line : Files.readAllLines(dataFile, StandardCharsets.UTF_8)) {
-                if (line.isBlank()) {
-                    continue;
-                }
-                try {
-                    tasks.add(parseStoredTask(line));
-                } catch (IllegalArgumentException e) {
-                    skippedRecords++;
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("OOPS!!! I could not load your saved tasks. Starting with an empty list.");
-            return new ArrayList<>();
-        }
-
-        if (skippedRecords > 0) {
-            System.out.println("OOPS!!! I skipped " + skippedRecords + " invalid saved task record(s).");
-        }
-        return tasks;
-    }
-
-    /**
-     * Parses one task record written by {@link Task#toDataString()}.
-     */
-    private static Task parseStoredTask(String line) {
-        String[] fields = line.split(" \\| ", -1);
-        if (fields.length < 3) {
-            throw new IllegalArgumentException("Too few fields");
-        }
-
-        boolean isDone;
-        if (fields[1].equals("1")) {
-            isDone = true;
-        } else if (fields[1].equals("0")) {
-            isDone = false;
-        } else {
-            throw new IllegalArgumentException("Invalid task status");
-        }
-
-        Task task;
-        switch (fields[0]) {
-        case "T":
-            requireFieldCount(fields, 3);
-            task = new Todo(decodeDescription(fields[2]));
-            break;
-        case "D":
-            requireFieldCount(fields, 4);
-            task = new Deadline(decodeDescription(fields[2]), parseStoredDate(fields[3]));
-            break;
-        case "E":
-            requireFieldCount(fields, 5);
-            task = new Event(decodeDescription(fields[2]), parseStoredDate(fields[3]),
-                    parseStoredDate(fields[4]));
-            break;
-        default:
-            throw new IllegalArgumentException("Unknown task type");
-        }
-
-        if (isDone) {
-            task.markAsDone();
-        }
-        return task;
-    }
-
-    /**
-     * Verifies that a stored task record has exactly the expected number of fields.
-     */
-    private static void requireFieldCount(String[] fields, int expectedCount) {
-        if (fields.length != expectedCount) {
-            throw new IllegalArgumentException("Unexpected field count");
-        }
-    }
-
-    /**
-     * Decodes one Base64 text field from a stored task record.
-     */
-    private static String decode(String text) {
-        return new String(Base64.getDecoder().decode(text), StandardCharsets.UTF_8);
-    }
-
-    /**
-     * Decodes and validates the required description field of a stored task.
-     */
-    private static String decodeDescription(String text) {
-        String description = decode(text);
-        if (description.isBlank()) {
-            throw new IllegalArgumentException("Empty task description");
-        }
-        return description;
-    }
-
-    /**
-     * Parses an ISO date stored in a Base64 data-file field.
-     */
-    private static LocalDate parseStoredDate(String text) {
-        try {
-            return LocalDate.parse(decode(text));
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Invalid stored date", e);
-        }
-    }
-
-    /**
-     * Writes the complete task list, creating its parent directory when needed.
-     */
-    private static void saveTasks(TaskList tasks, Path dataFile) throws IOException {
-        Path parentDirectory = dataFile.getParent();
-        if (parentDirectory != null) {
-            Files.createDirectories(parentDirectory);
-        }
-
-        List<String> records = new ArrayList<>();
-        for (int i = 0; i < tasks.size(); i++) {
-            records.add(tasks.get(i).toDataString());
-        }
-        Files.write(dataFile, records, StandardCharsets.UTF_8);
     }
 
     /**
