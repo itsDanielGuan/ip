@@ -109,6 +109,9 @@ public class Yappy {
         case DELETE:
             deleteTask(input);
             return true;
+        case FIND:
+            findTasks(input);
+            return false;
         case TODO:
             addTask(Parser.parseTodo(input));
             return true;
@@ -120,7 +123,7 @@ public class Yappy {
             return true;
         default:
             throw new YappyException("OOPS!!! I don't know what that means. "
-                    + "Try todo, deadline, event, list, mark, unmark, or delete.");
+                    + "Try todo, deadline, event, list, find, mark, unmark, or delete.");
         }
     }
 
@@ -159,5 +162,13 @@ public class Yappy {
         int index = Parser.parseTaskIndex(input, Command.DELETE, tasks.size());
         Task removedTask = tasks.remove(index);
         ui.showTaskDeleted(removedTask, tasks.size());
+    }
+
+    /**
+     * Shows tasks whose descriptions contain the requested keyword.
+     */
+    private void findTasks(String input) throws YappyException {
+        String keyword = Parser.parseFindKeyword(input);
+        ui.showMatchingTasks(tasks.find(keyword));
     }
 }

@@ -62,4 +62,10 @@ public class ParserTest {
         assertThrows(YappyException.class,
                 () -> Parser.parseTaskIndex("mark 4", Command.MARK, 3));
     }
+
+    @Test
+    public void parseFindKeyword_presentAndMissingKeyword_returnsKeywordOrThrows() throws YappyException {
+        assertEquals("project book", Parser.parseFindKeyword("find project book"));
+        assertThrows(YappyException.class, () -> Parser.parseFindKeyword("find"));
+    }
 }

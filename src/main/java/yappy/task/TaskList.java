@@ -50,4 +50,17 @@ public class TaskList {
     public Task remove(int index) {
         return tasks.remove(index);
     }
+
+    /**
+     * Returns a new task list containing tasks whose descriptions match the keyword.
+     */
+    public TaskList find(String keyword) {
+        List<Task> matchingTasks = new ArrayList<>();
+        for (Task task : tasks) {
+            if (task.containsKeyword(keyword)) {
+                matchingTasks.add(task);
+            }
+        }
+        return new TaskList(matchingTasks);
+    }
 }

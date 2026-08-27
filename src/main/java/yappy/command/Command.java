@@ -19,6 +19,9 @@ public enum Command {
     /** Deletes a task from the list. */
     DELETE("delete"),
 
+    /** Finds tasks whose descriptions contain a keyword. */
+    FIND("find"),
+
     /** Adds a todo task. */
     TODO("todo"),
 

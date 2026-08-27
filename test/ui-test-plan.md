@@ -1,6 +1,6 @@
 # UI Test Plan
 
-These tests exercise the console behavior through Duke Level 8. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output. Each test case starts with an empty data file unless it explicitly restarts Yappy.
+These tests exercise the console behavior through Duke Level 9. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output. Each test case starts with an empty data file unless it explicitly restarts Yappy.
 
 ## Test Case 1: Add and List the Three Task Types
 
@@ -106,7 +106,7 @@ Got it. I've added this task:
 Now you have 1 tasks in the list.
 OOPS!!! Please type a command.
 OOPS!!! The description of a todo cannot be empty.
-OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, unmark, or delete.
+OOPS!!! I don't know what that means. Try todo, deadline, event, list, find, mark, unmark, or delete.
 Here are the tasks in your list:
 1.[T][ ] keep state
 Bye. Hope to see you again soon!
@@ -321,5 +321,42 @@ Here are the tasks in your list:
 Noted. I've removed this task:
   [T][ ] write report
 Now you have 1 tasks in the list.
+Bye. Hope to see you again soon!
+```
+
+## Test Case 10: Find Tasks by Keyword
+
+Aim: Verify that find matches descriptions case-insensitively and that a missing keyword reports an error without changing the task list.
+
+Commands:
+```text
+todo Read Book
+deadline return book /by 2026-08-31
+todo buy groceries
+find BOOK
+find groceries
+find
+list
+bye
+```
+
+Expected output fragments:
+```text
+Got it. I've added this task:
+  [T][ ] Read Book
+Got it. I've added this task:
+  [D][ ] return book (by: Aug 31 2026)
+Got it. I've added this task:
+  [T][ ] buy groceries
+Here are the matching tasks in your list:
+1.[T][ ] Read Book
+2.[D][ ] return book (by: Aug 31 2026)
+Here are the matching tasks in your list:
+1.[T][ ] buy groceries
+OOPS!!! The keyword of a find command cannot be empty.
+Here are the tasks in your list:
+1.[T][ ] Read Book
+2.[D][ ] return book (by: Aug 31 2026)
+3.[T][ ] buy groceries
 Bye. Hope to see you again soon!
 ```

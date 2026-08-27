@@ -2,6 +2,7 @@ package yappy.task;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Locale;
 
 /**
  * Represents a task the user has asked the chatbot to remember.
@@ -39,6 +40,13 @@ public abstract class Task {
     /** Marks this task as not done yet. */
     public void markAsNotDone() {
         this.isDone = false;
+    }
+
+    /**
+     * Returns whether this task's description contains the keyword, ignoring letter case.
+     */
+    public boolean containsKeyword(String keyword) {
+        return description.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
     }
 
     /**
