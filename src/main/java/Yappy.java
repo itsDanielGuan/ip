@@ -1,8 +1,6 @@
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 /**
@@ -16,15 +14,6 @@ public class Yappy {
 
     /** Horizontal line used to separate the chatbot's messages from the user's input. */
     private static final String DIVIDER = "____________________________________________________________";
-
-    /** Marker separating a deadline description from its deadline text. */
-    private static final String BY_MARKER = "/by";
-
-    /** Marker separating an event description from its start text. */
-    private static final String FROM_MARKER = "/from";
-
-    /** Marker separating an event start text from its end text. */
-    private static final String TO_MARKER = "/to";
 
     /** Relative, OS-independent location of Yappy's persistent task data. */
     private static final Path DATA_FILE = Paths.get("data", "yappy.txt");
@@ -64,7 +53,7 @@ public class Yappy {
         // input ending unexpectedly (e.g. Ctrl+D, or piping a file that has no "bye").
         while (scanner.hasNextLine()) {
             String input = scanner.nextLine().trim();
-            Command command = input.isEmpty() ? Command.UNKNOWN : Command.fromInput(input);
+            Command command = Parser.getCommand(input);
 
             if (command == Command.BYE) {
                 break;
@@ -97,7 +86,7 @@ public class Yappy {
             throw new YappyException("OOPS!!! Please type a command.");
         }
 
-        Command command = Command.fromInput(input);
+        Command command = Parser.getCommand(input);
         switch (command) {
         case LIST:
             printTaskList(tasks);
@@ -112,24 +101,17 @@ public class Yappy {
             deleteTask(input, tasks);
             return true;
         case TODO:
-            addTodo(tasks, input);
+            addTask(tasks, Parser.parseTodo(input));
             return true;
         case DEADLINE:
-            addDeadline(tasks, input);
+            addTask(tasks, Parser.parseDeadline(input));
             return true;
         case EVENT:
-            addEvent(tasks, input);
+            addTask(tasks, Parser.parseEvent(input));
             return true;
         default:
             throw new YappyException("OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, unmark, or delete.");
         }
-    }
-
-    /**
-     * Returns the user's task text after the command word.
-     */
-    private static String getTextAfterCommand(String input, Command command) {
-        return input.substring(command.getWord().length()).trim();
     }
 
     /**
@@ -144,18 +126,6 @@ public class Yappy {
     }
 
     /**
-     * Adds a todo task after checking that its description is present.
-     */
-    private static void addTodo(TaskList tasks, String input) throws YappyException {
-        String description = getTextAfterCommand(input, Command.TODO);
-        if (description.isEmpty()) {
-            throw new YappyException("OOPS!!! The description of a todo cannot be empty.");
-        }
-
-        addTask(tasks, new Todo(description));
-    }
-
-    /**
      * Adds the given task to the task list.
      */
     private static void addTask(TaskList tasks, Task task) {
@@ -166,79 +136,10 @@ public class Yappy {
     }
 
     /**
-     * Parses a deadline command and adds the resulting deadline task.
-     */
-    private static void addDeadline(TaskList tasks, String input) throws YappyException {
-        String taskDetails = getTextAfterCommand(input, Command.DEADLINE);
-        int byIndex = taskDetails.indexOf(BY_MARKER);
-
-        if (byIndex == -1) {
-            throw new YappyException("OOPS!!! Please use: deadline DESCRIPTION /by WHEN");
-        }
-
-        String description = taskDetails.substring(0, byIndex).trim();
-        String by = taskDetails.substring(byIndex + BY_MARKER.length()).trim();
-        if (description.isEmpty()) {
-            throw new YappyException("OOPS!!! The description of a deadline cannot be empty.");
-        }
-        if (by.isEmpty()) {
-            throw new YappyException("OOPS!!! The /by value of a deadline cannot be empty.");
-        }
-
-        addTask(tasks, new Deadline(description, parseDate(by, BY_MARKER)));
-    }
-
-    /**
-     * Parses an event command and adds the resulting event task.
-     */
-    private static void addEvent(TaskList tasks, String input) throws YappyException {
-        String taskDetails = getTextAfterCommand(input, Command.EVENT);
-        int fromIndex = taskDetails.indexOf(FROM_MARKER);
-        int toIndex = fromIndex == -1 ? -1 : taskDetails.indexOf(TO_MARKER, fromIndex + FROM_MARKER.length());
-
-        if (fromIndex == -1 || toIndex == -1) {
-            throw new YappyException("OOPS!!! Please use: event DESCRIPTION /from START /to END");
-        }
-
-        String description = taskDetails.substring(0, fromIndex).trim();
-        String from = taskDetails.substring(fromIndex + FROM_MARKER.length(), toIndex).trim();
-        String to = taskDetails.substring(toIndex + TO_MARKER.length()).trim();
-        if (description.isEmpty()) {
-            throw new YappyException("OOPS!!! The description of an event cannot be empty.");
-        }
-        if (from.isEmpty()) {
-            throw new YappyException("OOPS!!! The /from value of an event cannot be empty.");
-        }
-        if (to.isEmpty()) {
-            throw new YappyException("OOPS!!! The /to value of an event cannot be empty.");
-        }
-
-        LocalDate fromDate = parseDate(from, FROM_MARKER);
-        LocalDate toDate = parseDate(to, TO_MARKER);
-        if (toDate.isBefore(fromDate)) {
-            throw new YappyException("OOPS!!! An event's /to date cannot be before its /from date.");
-        }
-
-        addTask(tasks, new Event(description, fromDate, toDate));
-    }
-
-    /**
-     * Parses a user-entered ISO date and reports a command-specific error when invalid.
-     */
-    private static LocalDate parseDate(String dateText, String marker) throws YappyException {
-        try {
-            return LocalDate.parse(dateText);
-        } catch (DateTimeParseException e) {
-            throw new YappyException("OOPS!!! Please enter the " + marker
-                    + " date as yyyy-MM-dd, e.g. 2019-10-15.");
-        }
-    }
-
-    /**
      * Marks the requested task as done.
      */
     private static void markTask(String input, TaskList tasks) throws YappyException {
-        int index = parseTaskIndex(input, Command.MARK, tasks.size());
+        int index = Parser.parseTaskIndex(input, Command.MARK, tasks.size());
         Task task = tasks.get(index);
         task.markAsDone();
         System.out.println("Nice! I've marked this task as done:");
@@ -249,7 +150,7 @@ public class Yappy {
      * Marks the requested task as not done yet.
      */
     private static void unmarkTask(String input, TaskList tasks) throws YappyException {
-        int index = parseTaskIndex(input, Command.UNMARK, tasks.size());
+        int index = Parser.parseTaskIndex(input, Command.UNMARK, tasks.size());
         Task task = tasks.get(index);
         task.markAsNotDone();
         System.out.println("OK, I've marked this task as not done yet:");
@@ -260,37 +161,11 @@ public class Yappy {
      * Deletes the requested task from the task list.
      */
     private static void deleteTask(String input, TaskList tasks) throws YappyException {
-        int index = parseTaskIndex(input, Command.DELETE, tasks.size());
+        int index = Parser.parseTaskIndex(input, Command.DELETE, tasks.size());
         Task removedTask = tasks.remove(index);
         System.out.println("Noted. I've removed this task:");
         System.out.println("  " + removedTask);
         System.out.println("Now you have " + tasks.size() + " tasks in the list.");
     }
 
-    /**
-     * Converts the user's 1-based task number into a valid array index.
-     */
-    private static int parseTaskIndex(String input, Command command, int taskCount) throws YappyException {
-        String numberText = getTextAfterCommand(input, command);
-        if (numberText.isEmpty()) {
-            throw new YappyException("OOPS!!! Please tell me which task to "
-                    + command.getWord() + ", e.g. " + command.getWord() + " 1.");
-        }
-
-        int taskNumber;
-        try {
-            taskNumber = Integer.parseInt(numberText);
-        } catch (NumberFormatException e) {
-            throw new YappyException("OOPS!!! Task numbers must be whole numbers.");
-        }
-
-        if (taskCount == 0) {
-            throw new YappyException("OOPS!!! There are no tasks in the list yet.");
-        }
-        if (taskNumber < 1 || taskNumber > taskCount) {
-            throw new YappyException("OOPS!!! Task number must be between 1 and " + taskCount + ".");
-        }
-
-        return taskNumber - 1;
-    }
 }

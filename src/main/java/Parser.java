@@ -1,0 +1,135 @@
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+
+/**
+ * Converts raw user input into commands, task data, and validated task indexes.
+ */
+public class Parser {
+    private static final String BY_MARKER = "/by";
+    private static final String FROM_MARKER = "/from";
+    private static final String TO_MARKER = "/to";
+
+    private Parser() {
+    }
+
+    /**
+     * Identifies the command word at the start of the user's input.
+     */
+    public static Command getCommand(String input) {
+        return input.isBlank() ? Command.UNKNOWN : Command.fromInput(input);
+    }
+
+    /**
+     * Parses a todo command into a validated todo task.
+     */
+    public static Todo parseTodo(String input) throws YappyException {
+        String description = getTextAfterCommand(input, Command.TODO);
+        if (description.isEmpty()) {
+            throw new YappyException("OOPS!!! The description of a todo cannot be empty.");
+        }
+        return new Todo(description);
+    }
+
+    /**
+     * Parses a deadline command into a validated deadline task.
+     */
+    public static Deadline parseDeadline(String input) throws YappyException {
+        String taskDetails = getTextAfterCommand(input, Command.DEADLINE);
+        int byIndex = taskDetails.indexOf(BY_MARKER);
+
+        if (byIndex == -1) {
+            throw new YappyException("OOPS!!! Please use: deadline DESCRIPTION /by WHEN");
+        }
+
+        String description = taskDetails.substring(0, byIndex).trim();
+        String by = taskDetails.substring(byIndex + BY_MARKER.length()).trim();
+        if (description.isEmpty()) {
+            throw new YappyException("OOPS!!! The description of a deadline cannot be empty.");
+        }
+        if (by.isEmpty()) {
+            throw new YappyException("OOPS!!! The /by value of a deadline cannot be empty.");
+        }
+
+        return new Deadline(description, parseDate(by, BY_MARKER));
+    }
+
+    /**
+     * Parses an event command into a validated event task.
+     */
+    public static Event parseEvent(String input) throws YappyException {
+        String taskDetails = getTextAfterCommand(input, Command.EVENT);
+        int fromIndex = taskDetails.indexOf(FROM_MARKER);
+        int toIndex = fromIndex == -1
+                ? -1
+                : taskDetails.indexOf(TO_MARKER, fromIndex + FROM_MARKER.length());
+
+        if (fromIndex == -1 || toIndex == -1) {
+            throw new YappyException("OOPS!!! Please use: event DESCRIPTION /from START /to END");
+        }
+
+        String description = taskDetails.substring(0, fromIndex).trim();
+        String from = taskDetails.substring(fromIndex + FROM_MARKER.length(), toIndex).trim();
+        String to = taskDetails.substring(toIndex + TO_MARKER.length()).trim();
+        if (description.isEmpty()) {
+            throw new YappyException("OOPS!!! The description of an event cannot be empty.");
+        }
+        if (from.isEmpty()) {
+            throw new YappyException("OOPS!!! The /from value of an event cannot be empty.");
+        }
+        if (to.isEmpty()) {
+            throw new YappyException("OOPS!!! The /to value of an event cannot be empty.");
+        }
+
+        LocalDate fromDate = parseDate(from, FROM_MARKER);
+        LocalDate toDate = parseDate(to, TO_MARKER);
+        if (toDate.isBefore(fromDate)) {
+            throw new YappyException("OOPS!!! An event's /to date cannot be before its /from date.");
+        }
+        return new Event(description, fromDate, toDate);
+    }
+
+    /**
+     * Converts the user's 1-based task number into a valid zero-based index.
+     */
+    public static int parseTaskIndex(String input, Command command, int taskCount) throws YappyException {
+        String numberText = getTextAfterCommand(input, command);
+        if (numberText.isEmpty()) {
+            throw new YappyException("OOPS!!! Please tell me which task to "
+                    + command.getWord() + ", e.g. " + command.getWord() + " 1.");
+        }
+
+        int taskNumber;
+        try {
+            taskNumber = Integer.parseInt(numberText);
+        } catch (NumberFormatException e) {
+            throw new YappyException("OOPS!!! Task numbers must be whole numbers.");
+        }
+
+        if (taskCount == 0) {
+            throw new YappyException("OOPS!!! There are no tasks in the list yet.");
+        }
+        if (taskNumber < 1 || taskNumber > taskCount) {
+            throw new YappyException("OOPS!!! Task number must be between 1 and " + taskCount + ".");
+        }
+        return taskNumber - 1;
+    }
+
+    /**
+     * Returns the user's text after the command word.
+     */
+    private static String getTextAfterCommand(String input, Command command) {
+        return input.substring(command.getWord().length()).trim();
+    }
+
+    /**
+     * Parses a user-entered ISO date and reports a command-specific error when invalid.
+     */
+    private static LocalDate parseDate(String dateText, String marker) throws YappyException {
+        try {
+            return LocalDate.parse(dateText);
+        } catch (DateTimeParseException e) {
+            throw new YappyException("OOPS!!! Please enter the " + marker
+                    + " date as yyyy-MM-dd, e.g. 2019-10-15.");
+        }
+    }
+}
