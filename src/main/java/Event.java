@@ -1,17 +1,25 @@
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
 /**
  * Represents a task that happens from one date/time to another.
  */
 public class Event extends Task {
-    /** Raw date/time text typed after the /from marker. */
-    protected String from;
+    /** Format used when showing dates to the user. */
+    private static final DateTimeFormatter DISPLAY_FORMAT =
+            DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH);
 
-    /** Raw date/time text typed after the /to marker. */
-    protected String to;
+    /** Date on which this event starts. */
+    private final LocalDate from;
+
+    /** Date on which this event ends. */
+    private final LocalDate to;
 
     /**
-     * Creates an event task with the given description and time range text.
+     * Creates an event task with the given description and date range.
      */
-    public Event(String description, String from, String to) {
+    public Event(String description, LocalDate from, LocalDate to) {
         super(TaskType.EVENT, description);
         this.from = from;
         this.to = to;
@@ -20,7 +28,7 @@ public class Event extends Task {
     @Override
     public String toDataString() {
         return "E | " + (isDone ? "1" : "0") + " | " + encode(description)
-                + " | " + encode(from) + " | " + encode(to);
+                + " | " + encode(from.toString()) + " | " + encode(to.toString());
     }
 
     /**
@@ -28,6 +36,7 @@ public class Event extends Task {
      */
     @Override
     public String toString() {
-        return super.toString() + " (from: " + from + " to: " + to + ")";
+        return super.toString() + " (from: " + from.format(DISPLAY_FORMAT)
+                + " to: " + to.format(DISPLAY_FORMAT) + ")";
     }
 }
