@@ -97,30 +97,30 @@ public class Yappy {
 
         Command command = Parser.getCommand(input);
         switch (command) {
-        case LIST:
-            ui.showTaskList(tasks);
-            return false;
-        case MARK:
-            markTask(input);
-            return true;
-        case UNMARK:
-            unmarkTask(input);
-            return true;
-        case DELETE:
-            deleteTask(input);
-            return true;
-        case TODO:
-            addTask(Parser.parseTodo(input));
-            return true;
-        case DEADLINE:
-            addTask(Parser.parseDeadline(input));
-            return true;
-        case EVENT:
-            addTask(Parser.parseEvent(input));
-            return true;
-        default:
-            throw new YappyException("OOPS!!! I don't know what that means. "
-                    + "Try todo, deadline, event, list, mark, unmark, or delete.");
+            case LIST:
+                ui.showTaskList(tasks);
+                return false;
+            case MARK:
+                markTask(input);
+                return true;
+            case UNMARK:
+                unmarkTask(input);
+                return true;
+            case DELETE:
+                deleteTask(input);
+                return true;
+            case TODO:
+                addTask(Parser.parseTodo(input));
+                return true;
+            case DEADLINE:
+                addTask(Parser.parseDeadline(input));
+                return true;
+            case EVENT:
+                addTask(Parser.parseEvent(input));
+                return true;
+            default:
+                throw new YappyException("OOPS!!! I don't know what that means. "
+                        + "Try todo, deadline, event, list, mark, unmark, or delete.");
         }
     }
 
