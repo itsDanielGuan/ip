@@ -42,3 +42,21 @@ On macOS or Linux, run:
 ```
 
 Run `.\gradlew.bat build` on Windows or `./gradlew build` on macOS and Linux to compile the project and execute its automated tests.
+
+## Creating an Executable JAR
+
+Run the following command on Windows:
+
+```powershell
+.\gradlew.bat shadowJar
+```
+
+On macOS or Linux, run `./gradlew shadowJar` instead. The executable file is created at `build/libs/Yappy.jar`.
+
+To distribute Yappy, copy `Yappy.jar` into an empty folder. Open a terminal in that folder and run:
+
+```text
+java -jar "Yappy.jar"
+```
+
+Yappy creates its `data/yappy.txt` file relative to the folder from which the JAR is run. The generated JAR and runtime data are excluded from Git.
