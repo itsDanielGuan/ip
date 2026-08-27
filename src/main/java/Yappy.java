@@ -1,4 +1,10 @@
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Scanner;
 
@@ -23,6 +29,9 @@ public class Yappy {
     /** Marker separating an event start text from its end text. */
     private static final String TO_MARKER = "/to";
 
+    /** Relative, OS-independent location of Yappy's persistent task data. */
+    private static final Path DATA_FILE = Paths.get("data", "yappy.txt");
+
     public static void main(String[] args) {
         // ASCII art logo. Each backslash is doubled, since backslash is the Java escape character.
         String banner = "__   __                            \n"
@@ -38,8 +47,7 @@ public class Yappy {
         System.out.println("What can I do for you?");
         System.out.println(DIVIDER);
 
-        // ArrayList grows as tasks are added and makes deletion straightforward.
-        List<Task> tasks = new ArrayList<>();
+        List<Task> tasks = loadTasks(DATA_FILE);
 
         // Scanner reads the user's input from the keyboard (System.in), one line at a time.
         Scanner scanner = new Scanner(System.in);
@@ -56,9 +64,14 @@ public class Yappy {
 
             System.out.println(DIVIDER);
             try {
-                processInput(input, tasks);
+                boolean taskListChanged = processInput(input, tasks);
+                if (taskListChanged) {
+                    saveTasks(tasks, DATA_FILE);
+                }
             } catch (YappyException e) {
                 System.out.println(e.getMessage());
+            } catch (IOException e) {
+                System.out.println("OOPS!!! I could not save your tasks: " + e.getMessage());
             }
             System.out.println(DIVIDER);
         }
@@ -71,7 +84,7 @@ public class Yappy {
     /**
      * Runs one non-bye command.
      */
-    private static void processInput(String input, List<Task> tasks) throws YappyException {
+    private static boolean processInput(String input, List<Task> tasks) throws YappyException {
         if (input.isEmpty()) {
             throw new YappyException("OOPS!!! Please type a command.");
         }
@@ -80,28 +93,146 @@ public class Yappy {
         switch (command) {
         case LIST:
             printTaskList(tasks);
-            break;
+            return false;
         case MARK:
             markTask(input, tasks);
-            break;
+            return true;
         case UNMARK:
             unmarkTask(input, tasks);
-            break;
+            return true;
         case DELETE:
             deleteTask(input, tasks);
-            break;
+            return true;
         case TODO:
             addTodo(tasks, input);
-            break;
+            return true;
         case DEADLINE:
             addDeadline(tasks, input);
-            break;
+            return true;
         case EVENT:
             addEvent(tasks, input);
-            break;
+            return true;
         default:
             throw new YappyException("OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, unmark, or delete.");
         }
+    }
+
+    /**
+     * Loads all valid task records from the data file.
+     * A missing file represents a user who has not saved any tasks yet.
+     */
+    private static List<Task> loadTasks(Path dataFile) {
+        List<Task> tasks = new ArrayList<>();
+        if (Files.notExists(dataFile)) {
+            return tasks;
+        }
+
+        int skippedRecords = 0;
+        try {
+            for (String line : Files.readAllLines(dataFile, StandardCharsets.UTF_8)) {
+                if (line.isBlank()) {
+                    continue;
+                }
+                try {
+                    tasks.add(parseStoredTask(line));
+                } catch (IllegalArgumentException e) {
+                    skippedRecords++;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("OOPS!!! I could not load your saved tasks. Starting with an empty list.");
+            return new ArrayList<>();
+        }
+
+        if (skippedRecords > 0) {
+            System.out.println("OOPS!!! I skipped " + skippedRecords + " invalid saved task record(s).");
+        }
+        return tasks;
+    }
+
+    /**
+     * Parses one task record written by {@link Task#toDataString()}.
+     */
+    private static Task parseStoredTask(String line) {
+        String[] fields = line.split(" \\| ", -1);
+        if (fields.length < 3) {
+            throw new IllegalArgumentException("Too few fields");
+        }
+
+        boolean isDone;
+        if (fields[1].equals("1")) {
+            isDone = true;
+        } else if (fields[1].equals("0")) {
+            isDone = false;
+        } else {
+            throw new IllegalArgumentException("Invalid task status");
+        }
+
+        Task task;
+        switch (fields[0]) {
+        case "T":
+            requireFieldCount(fields, 3);
+            task = new Todo(decodeDescription(fields[2]));
+            break;
+        case "D":
+            requireFieldCount(fields, 4);
+            task = new Deadline(decodeDescription(fields[2]), decode(fields[3]));
+            break;
+        case "E":
+            requireFieldCount(fields, 5);
+            task = new Event(decodeDescription(fields[2]), decode(fields[3]), decode(fields[4]));
+            break;
+        default:
+            throw new IllegalArgumentException("Unknown task type");
+        }
+
+        if (isDone) {
+            task.markAsDone();
+        }
+        return task;
+    }
+
+    /**
+     * Verifies that a stored task record has exactly the expected number of fields.
+     */
+    private static void requireFieldCount(String[] fields, int expectedCount) {
+        if (fields.length != expectedCount) {
+            throw new IllegalArgumentException("Unexpected field count");
+        }
+    }
+
+    /**
+     * Decodes one Base64 text field from a stored task record.
+     */
+    private static String decode(String text) {
+        return new String(Base64.getDecoder().decode(text), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Decodes and validates the required description field of a stored task.
+     */
+    private static String decodeDescription(String text) {
+        String description = decode(text);
+        if (description.isBlank()) {
+            throw new IllegalArgumentException("Empty task description");
+        }
+        return description;
+    }
+
+    /**
+     * Writes the complete task list, creating its parent directory when needed.
+     */
+    private static void saveTasks(List<Task> tasks, Path dataFile) throws IOException {
+        Path parentDirectory = dataFile.getParent();
+        if (parentDirectory != null) {
+            Files.createDirectories(parentDirectory);
+        }
+
+        List<String> records = new ArrayList<>();
+        for (Task task : tasks) {
+            records.add(task.toDataString());
+        }
+        Files.write(dataFile, records, StandardCharsets.UTF_8);
     }
 
     /**

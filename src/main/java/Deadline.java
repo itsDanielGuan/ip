@@ -13,6 +13,11 @@ public class Deadline extends Task {
         this.by = by;
     }
 
+    @Override
+    public String toDataString() {
+        return "D | " + (isDone ? "1" : "0") + " | " + encode(description) + " | " + encode(by);
+    }
+
     /**
      * Returns the deadline formatted with its deadline text.
      */

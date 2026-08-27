@@ -1,3 +1,6 @@
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 /**
  * Represents a task the user has asked the chatbot to remember.
  * Subclasses add the task type and any extra timing information.
@@ -35,6 +38,18 @@ public abstract class Task {
     public void markAsNotDone() {
         this.isDone = false;
     }
+
+    /**
+     * Encodes text so separators and line breaks can be stored safely in one data-file record.
+     */
+    protected String encode(String text) {
+        return Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Returns a stable representation of this task for saving to disk.
+     */
+    public abstract String toDataString();
 
     /**
      * Returns the task status and description, e.g. "[X] read book".
