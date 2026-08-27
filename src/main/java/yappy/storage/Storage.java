@@ -97,21 +97,21 @@ public class Storage {
 
         Task task;
         switch (fields[0]) {
-        case "T":
-            requireFieldCount(fields, 3);
-            task = new Todo(decodeDescription(fields[2]));
-            break;
-        case "D":
-            requireFieldCount(fields, 4);
-            task = new Deadline(decodeDescription(fields[2]), parseStoredDate(fields[3]));
-            break;
-        case "E":
-            requireFieldCount(fields, 5);
-            task = new Event(decodeDescription(fields[2]), parseStoredDate(fields[3]),
-                    parseStoredDate(fields[4]));
-            break;
-        default:
-            throw new IllegalArgumentException("Unknown task type");
+            case "T":
+                requireFieldCount(fields, 3);
+                task = new Todo(decodeDescription(fields[2]));
+                break;
+            case "D":
+                requireFieldCount(fields, 4);
+                task = new Deadline(decodeDescription(fields[2]), parseStoredDate(fields[3]));
+                break;
+            case "E":
+                requireFieldCount(fields, 5);
+                task = new Event(decodeDescription(fields[2]), parseStoredDate(fields[3]),
+                        parseStoredDate(fields[4]));
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown task type");
         }
 
         if (isDone) {
