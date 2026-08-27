@@ -186,7 +186,7 @@ ____________________________________________________________
 OOPS!!! The description of a todo cannot be empty.
 ____________________________________________________________
 ____________________________________________________________
-OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, unmark, or delete.
+OOPS!!! I don't know what that means. Try todo, deadline, event, list, find, mark, unmark, or delete.
 ____________________________________________________________
 ____________________________________________________________
 Here are the tasks in your list:
@@ -575,6 +575,70 @@ ____________________________________________________________
 Noted. I've removed this task:
   [T][ ] write report
 Now you have 1 tasks in the list.
+____________________________________________________________
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+## Test Case 10: Find Tasks by Keyword
+
+Console input:
+```text
+todo Read Book
+deadline return book /by 2026-08-31
+todo buy groceries
+find BOOK
+find groceries
+find
+list
+bye
+```
+
+Console output:
+```text
+____________________________________________________________
+__   __
+\ \ / /  __ _  _ __   _ __   _   _
+ \ V /  / _` || '_ \ | '_ \ | | | |
+  | |  | (_| || |_) || |_) || |_| |
+  |_|   \__,_|| .__/ | .__/  \__, |
+              |_|    |_|      |___/
+Hello! I'm Yappy.
+What can I do for you?
+____________________________________________________________
+____________________________________________________________
+Got it. I've added this task:
+  [T][ ] Read Book
+Now you have 1 tasks in the list.
+____________________________________________________________
+____________________________________________________________
+Got it. I've added this task:
+  [D][ ] return book (by: Aug 31 2026)
+Now you have 2 tasks in the list.
+____________________________________________________________
+____________________________________________________________
+Got it. I've added this task:
+  [T][ ] buy groceries
+Now you have 3 tasks in the list.
+____________________________________________________________
+____________________________________________________________
+Here are the matching tasks in your list:
+1.[T][ ] Read Book
+2.[D][ ] return book (by: Aug 31 2026)
+____________________________________________________________
+____________________________________________________________
+Here are the matching tasks in your list:
+1.[T][ ] buy groceries
+____________________________________________________________
+____________________________________________________________
+OOPS!!! The keyword of a find command cannot be empty.
+____________________________________________________________
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] Read Book
+2.[D][ ] return book (by: Aug 31 2026)
+3.[T][ ] buy groceries
 ____________________________________________________________
 ____________________________________________________________
 Bye. Hope to see you again soon!

@@ -96,6 +96,17 @@ public class Parser {
     }
 
     /**
+     * Parses and validates the keyword of a find command.
+     */
+    public static String parseFindKeyword(String input) throws YappyException {
+        String keyword = getTextAfterCommand(input, Command.FIND);
+        if (keyword.isEmpty()) {
+            throw new YappyException("OOPS!!! The keyword of a find command cannot be empty.");
+        }
+        return keyword;
+    }
+
+    /**
      * Converts the user's 1-based task number into a valid zero-based index.
      */
     public static int parseTaskIndex(String input, Command command, int taskCount) throws YappyException {
