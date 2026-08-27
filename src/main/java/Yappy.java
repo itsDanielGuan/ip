@@ -1,87 +1,86 @@
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Scanner;
 
 /**
- * Entry point of the Yappy chatbot.
- * At this stage the bot stores todos, deadlines, and events, lists them back,
- * marks them done or not done, and exits on the "bye" command.
+ * Coordinates Yappy's user interface, command processing, task list, and storage.
  */
 public class Yappy {
-    /** Name the chatbot introduces itself with. */
-    private static final String NAME = "Yappy";
-
-    /** Horizontal line used to separate the chatbot's messages from the user's input. */
-    private static final String DIVIDER = "____________________________________________________________";
-
-    /** Relative, OS-independent location of Yappy's persistent task data. */
     private static final Path DATA_FILE = Paths.get("data", "yappy.txt");
 
-    public static void main(String[] args) {
-        // ASCII art logo. Each backslash is doubled, since backslash is the Java escape character.
-        String banner = "__   __                            \n"
-                + "\\ \\ / /  __ _  _ __   _ __   _   _ \n"
-                + " \\ V /  / _` || '_ \\ | '_ \\ | | | |\n"
-                + "  | |  | (_| || |_) || |_) || |_| |\n"
-                + "  |_|   \\__,_|| .__/ | .__/  \\__, |\n"
-                + "              |_|    |_|      |___/ ";
+    private final Storage storage;
+    private final TaskList tasks;
+    private final Ui ui;
+    private final int skippedRecordCount;
+    private final boolean loadFailed;
 
-        System.out.println(DIVIDER);
-        System.out.println(banner);
-        System.out.println("Hello! I'm " + NAME + ".");
-        System.out.println("What can I do for you?");
-        System.out.println(DIVIDER);
+    /**
+     * Creates a Yappy chatbot backed by the specified data file.
+     */
+    public Yappy(Path dataFile) {
+        this.storage = new Storage(dataFile);
+        this.ui = new Ui();
 
-        Storage storage = new Storage(DATA_FILE);
-        TaskList tasks;
+        TaskList loadedTasks;
+        int skippedRecords = 0;
+        boolean loadingFailed = false;
         try {
-            tasks = new TaskList(storage.load());
-            if (storage.getSkippedRecordCount() > 0) {
-                System.out.println("OOPS!!! I skipped " + storage.getSkippedRecordCount()
-                        + " invalid saved task record(s).");
-            }
+            loadedTasks = new TaskList(storage.load());
+            skippedRecords = storage.getSkippedRecordCount();
         } catch (IOException e) {
-            System.out.println("OOPS!!! I could not load your saved tasks. Starting with an empty list.");
-            tasks = new TaskList();
+            loadedTasks = new TaskList();
+            loadingFailed = true;
+        }
+        this.tasks = loadedTasks;
+        this.skippedRecordCount = skippedRecords;
+        this.loadFailed = loadingFailed;
+    }
+
+    /**
+     * Starts Yappy using its default relative data-file location.
+     */
+    public static void main(String[] args) {
+        new Yappy(DATA_FILE).run();
+    }
+
+    /**
+     * Reads and executes commands until the user exits or the input stream ends.
+     */
+    public void run() {
+        ui.showWelcome();
+        if (loadFailed) {
+            ui.showLoadingError();
+        } else if (skippedRecordCount > 0) {
+            ui.showSkippedRecords(skippedRecordCount);
         }
 
-        // Scanner reads the user's input from the keyboard (System.in), one line at a time.
-        Scanner scanner = new Scanner(System.in);
-
-        // Keep reading until the user says "bye". hasNextLine() guards against the
-        // input ending unexpectedly (e.g. Ctrl+D, or piping a file that has no "bye").
-        while (scanner.hasNextLine()) {
-            String input = scanner.nextLine().trim();
-            Command command = Parser.getCommand(input);
-
-            if (command == Command.BYE) {
+        while (ui.hasNextCommand()) {
+            String input = ui.readCommand();
+            if (Parser.getCommand(input) == Command.BYE) {
                 break;
             }
 
-            System.out.println(DIVIDER);
+            ui.showLine();
             try {
-                boolean taskListChanged = processInput(input, tasks);
+                boolean taskListChanged = processInput(input);
                 if (taskListChanged) {
                     storage.save(tasks);
                 }
             } catch (YappyException e) {
-                System.out.println(e.getMessage());
+                ui.showError(e.getMessage());
             } catch (IOException e) {
-                System.out.println("OOPS!!! I could not save your tasks: " + e.getMessage());
+                ui.showSavingError(e.getMessage());
+            } finally {
+                ui.showLine();
             }
-            System.out.println(DIVIDER);
         }
-
-        System.out.println(DIVIDER);
-        System.out.println("Bye. Hope to see you again soon!");
-        System.out.println(DIVIDER);
+        ui.showGoodbye();
     }
 
     /**
-     * Runs one non-bye command.
+     * Executes one non-exit command and reports whether it changed the task list.
      */
-    private static boolean processInput(String input, TaskList tasks) throws YappyException {
+    private boolean processInput(String input) throws YappyException {
         if (input.isEmpty()) {
             throw new YappyException("OOPS!!! Please type a command.");
         }
@@ -89,83 +88,66 @@ public class Yappy {
         Command command = Parser.getCommand(input);
         switch (command) {
         case LIST:
-            printTaskList(tasks);
+            ui.showTaskList(tasks);
             return false;
         case MARK:
-            markTask(input, tasks);
+            markTask(input);
             return true;
         case UNMARK:
-            unmarkTask(input, tasks);
+            unmarkTask(input);
             return true;
         case DELETE:
-            deleteTask(input, tasks);
+            deleteTask(input);
             return true;
         case TODO:
-            addTask(tasks, Parser.parseTodo(input));
+            addTask(Parser.parseTodo(input));
             return true;
         case DEADLINE:
-            addTask(tasks, Parser.parseDeadline(input));
+            addTask(Parser.parseDeadline(input));
             return true;
         case EVENT:
-            addTask(tasks, Parser.parseEvent(input));
+            addTask(Parser.parseEvent(input));
             return true;
         default:
-            throw new YappyException("OOPS!!! I don't know what that means. Try todo, deadline, event, list, mark, unmark, or delete.");
+            throw new YappyException("OOPS!!! I don't know what that means. "
+                    + "Try todo, deadline, event, list, mark, unmark, or delete.");
         }
     }
 
     /**
-     * Prints all stored tasks in their current order.
+     * Adds a task and tells the user about the updated list.
      */
-    private static void printTaskList(TaskList tasks) {
-        System.out.println("Here are the tasks in your list:");
-        // The numbering shown to the user starts at 1, while ArrayList is 0-indexed.
-        for (int i = 0; i < tasks.size(); i++) {
-            System.out.println((i + 1) + "." + tasks.get(i));
-        }
-    }
-
-    /**
-     * Adds the given task to the task list.
-     */
-    private static void addTask(TaskList tasks, Task task) {
+    private void addTask(Task task) {
         tasks.add(task);
-        System.out.println("Got it. I've added this task:");
-        System.out.println("  " + task);
-        System.out.println("Now you have " + tasks.size() + " tasks in the list.");
+        ui.showTaskAdded(task, tasks.size());
     }
 
     /**
      * Marks the requested task as done.
      */
-    private static void markTask(String input, TaskList tasks) throws YappyException {
+    private void markTask(String input) throws YappyException {
         int index = Parser.parseTaskIndex(input, Command.MARK, tasks.size());
         Task task = tasks.get(index);
         task.markAsDone();
-        System.out.println("Nice! I've marked this task as done:");
-        System.out.println("  " + task);
+        ui.showTaskMarked(task);
     }
 
     /**
      * Marks the requested task as not done yet.
      */
-    private static void unmarkTask(String input, TaskList tasks) throws YappyException {
+    private void unmarkTask(String input) throws YappyException {
         int index = Parser.parseTaskIndex(input, Command.UNMARK, tasks.size());
         Task task = tasks.get(index);
         task.markAsNotDone();
-        System.out.println("OK, I've marked this task as not done yet:");
-        System.out.println("  " + task);
+        ui.showTaskUnmarked(task);
     }
 
     /**
-     * Deletes the requested task from the task list.
+     * Deletes the requested task.
      */
-    private static void deleteTask(String input, TaskList tasks) throws YappyException {
+    private void deleteTask(String input) throws YappyException {
         int index = Parser.parseTaskIndex(input, Command.DELETE, tasks.size());
         Task removedTask = tasks.remove(index);
-        System.out.println("Noted. I've removed this task:");
-        System.out.println("  " + removedTask);
-        System.out.println("Now you have " + tasks.size() + " tasks in the list.");
+        ui.showTaskDeleted(removedTask, tasks.size());
     }
-
 }
