@@ -1,6 +1,6 @@
 # UI Test Plan
 
-These tests exercise the console behavior for Duke Level 6. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output.
+These tests exercise the console behavior through Duke Level 7. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output. Each test case starts with an empty data file unless it explicitly restarts Yappy.
 
 ## Test Case 1: Add and List the Three Task Types
 
@@ -274,5 +274,42 @@ Noted. I've removed this task:
 Now you have 1 tasks in the list.
 Here are the tasks in your list:
 1.[T][ ] alpha
+Bye. Hope to see you again soon!
+```
+
+## Test Case 9: Save and Reload Tasks
+
+Aim: Verify that tasks and their completion status survive an application restart and remain editable after loading.
+
+Commands:
+```text
+todo write report
+deadline submit report /by Friday
+mark 2
+bye
+```
+
+Commands after restart:
+```text
+list
+delete 1
+bye
+```
+
+Expected output fragments:
+```text
+Got it. I've added this task:
+  [T][ ] write report
+Got it. I've added this task:
+  [D][ ] submit report (by: Friday)
+Nice! I've marked this task as done:
+  [D][X] submit report (by: Friday)
+Bye. Hope to see you again soon!
+Here are the tasks in your list:
+1.[T][ ] write report
+2.[D][X] submit report (by: Friday)
+Noted. I've removed this task:
+  [T][ ] write report
+Now you have 1 tasks in the list.
 Bye. Hope to see you again soon!
 ```

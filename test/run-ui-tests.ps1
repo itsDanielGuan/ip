@@ -1,6 +1,7 @@
 param(
     [string] $PlanPath = "test/ui-test-plan.md",
-    [string] $SessionPath = "test/ui-test-session.md"
+    [string] $SessionPath = "test/ui-test-session.md",
+    [string] $DataPath = "data/yappy.txt"
 )
 
 $ErrorActionPreference = "Stop"
@@ -72,12 +73,29 @@ foreach ($caseMatch in $caseMatches) {
     $commands = Get-FencedBlock -Section $section -Label "Commands"
     $expected = Get-FencedBlock -Section $section -Label "Expected output fragments"
 
+    Remove-Item -LiteralPath $DataPath -Force -ErrorAction SilentlyContinue
     $inputText = $commands.TrimEnd() + "`n"
     $actual = $inputText | & java -cp bin Yappy
     $actualText = ($actual -join "`n")
+    $combinedActualText = $actualText
+
+    $restartMatch = [regex]::Match(
+        $section,
+        [regex]::Escape("Commands after restart") + ':\s*```text\s*(.*?)\s*```',
+        [System.Text.RegularExpressions.RegexOptions]::Singleline
+    )
+    $restartCommands = $null
+    $restartActualText = $null
+    if ($restartMatch.Success) {
+        $restartCommands = $restartMatch.Groups[1].Value.Trim()
+        $restartInputText = $restartCommands.TrimEnd() + "`n"
+        $restartActual = $restartInputText | & java -cp bin Yappy
+        $restartActualText = ($restartActual -join "`n")
+        $combinedActualText = $actualText + "`n" + $restartActualText
+    }
 
     $expectedLines = $expected -split "`r?`n"
-    Assert-FragmentsInOrder -Actual $actualText -ExpectedLines $expectedLines -CaseName $title
+    Assert-FragmentsInOrder -Actual $combinedActualText -ExpectedLines $expectedLines -CaseName $title
 
     $session.Add("")
     $session.Add("## $title")
@@ -89,9 +107,25 @@ foreach ($caseMatch in $caseMatches) {
     $session.Add("")
     $session.Add("Console output:")
     $session.Add('```text')
-    $session.Add($actualText)
+    $session.Add(($actualText -split "`n" | ForEach-Object { $_.TrimEnd() }) -join "`n")
     $session.Add('```')
+
+    if ($restartMatch.Success) {
+        $session.Add("")
+        $session.Add("Restart console input:")
+        $session.Add('```text')
+        $session.Add($restartCommands)
+        $session.Add('```')
+        $session.Add("")
+        $session.Add("Restart console output:")
+        $session.Add('```text')
+        $session.Add(($restartActualText -split "`n" | ForEach-Object { $_.TrimEnd() }) -join "`n")
+        $session.Add('```')
+    }
 }
 
-Set-Content -LiteralPath $SessionPath -Value $session
+Remove-Item -LiteralPath $DataPath -Force -ErrorAction SilentlyContinue
+$sessionText = ($session -join "`n") + "`n"
+$utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($SessionPath, $sessionText, $utf8WithoutBom)
 Write-Host "All UI test cases passed. Session written to $SessionPath."
