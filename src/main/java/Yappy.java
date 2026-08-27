@@ -49,7 +49,7 @@ public class Yappy {
         System.out.println("What can I do for you?");
         System.out.println(DIVIDER);
 
-        List<Task> tasks = loadTasks(DATA_FILE);
+        TaskList tasks = new TaskList(loadTasks(DATA_FILE));
 
         // Scanner reads the user's input from the keyboard (System.in), one line at a time.
         Scanner scanner = new Scanner(System.in);
@@ -86,7 +86,7 @@ public class Yappy {
     /**
      * Runs one non-bye command.
      */
-    private static boolean processInput(String input, List<Task> tasks) throws YappyException {
+    private static boolean processInput(String input, TaskList tasks) throws YappyException {
         if (input.isEmpty()) {
             throw new YappyException("OOPS!!! Please type a command.");
         }
@@ -236,15 +236,15 @@ public class Yappy {
     /**
      * Writes the complete task list, creating its parent directory when needed.
      */
-    private static void saveTasks(List<Task> tasks, Path dataFile) throws IOException {
+    private static void saveTasks(TaskList tasks, Path dataFile) throws IOException {
         Path parentDirectory = dataFile.getParent();
         if (parentDirectory != null) {
             Files.createDirectories(parentDirectory);
         }
 
         List<String> records = new ArrayList<>();
-        for (Task task : tasks) {
-            records.add(task.toDataString());
+        for (int i = 0; i < tasks.size(); i++) {
+            records.add(tasks.get(i).toDataString());
         }
         Files.write(dataFile, records, StandardCharsets.UTF_8);
     }
@@ -259,7 +259,7 @@ public class Yappy {
     /**
      * Prints all stored tasks in their current order.
      */
-    private static void printTaskList(List<Task> tasks) {
+    private static void printTaskList(TaskList tasks) {
         System.out.println("Here are the tasks in your list:");
         // The numbering shown to the user starts at 1, while ArrayList is 0-indexed.
         for (int i = 0; i < tasks.size(); i++) {
@@ -270,7 +270,7 @@ public class Yappy {
     /**
      * Adds a todo task after checking that its description is present.
      */
-    private static void addTodo(List<Task> tasks, String input) throws YappyException {
+    private static void addTodo(TaskList tasks, String input) throws YappyException {
         String description = getTextAfterCommand(input, Command.TODO);
         if (description.isEmpty()) {
             throw new YappyException("OOPS!!! The description of a todo cannot be empty.");
@@ -282,7 +282,7 @@ public class Yappy {
     /**
      * Adds the given task to the task list.
      */
-    private static void addTask(List<Task> tasks, Task task) {
+    private static void addTask(TaskList tasks, Task task) {
         tasks.add(task);
         System.out.println("Got it. I've added this task:");
         System.out.println("  " + task);
@@ -292,7 +292,7 @@ public class Yappy {
     /**
      * Parses a deadline command and adds the resulting deadline task.
      */
-    private static void addDeadline(List<Task> tasks, String input) throws YappyException {
+    private static void addDeadline(TaskList tasks, String input) throws YappyException {
         String taskDetails = getTextAfterCommand(input, Command.DEADLINE);
         int byIndex = taskDetails.indexOf(BY_MARKER);
 
@@ -315,7 +315,7 @@ public class Yappy {
     /**
      * Parses an event command and adds the resulting event task.
      */
-    private static void addEvent(List<Task> tasks, String input) throws YappyException {
+    private static void addEvent(TaskList tasks, String input) throws YappyException {
         String taskDetails = getTextAfterCommand(input, Command.EVENT);
         int fromIndex = taskDetails.indexOf(FROM_MARKER);
         int toIndex = fromIndex == -1 ? -1 : taskDetails.indexOf(TO_MARKER, fromIndex + FROM_MARKER.length());
@@ -361,7 +361,7 @@ public class Yappy {
     /**
      * Marks the requested task as done.
      */
-    private static void markTask(String input, List<Task> tasks) throws YappyException {
+    private static void markTask(String input, TaskList tasks) throws YappyException {
         int index = parseTaskIndex(input, Command.MARK, tasks.size());
         Task task = tasks.get(index);
         task.markAsDone();
@@ -372,7 +372,7 @@ public class Yappy {
     /**
      * Marks the requested task as not done yet.
      */
-    private static void unmarkTask(String input, List<Task> tasks) throws YappyException {
+    private static void unmarkTask(String input, TaskList tasks) throws YappyException {
         int index = parseTaskIndex(input, Command.UNMARK, tasks.size());
         Task task = tasks.get(index);
         task.markAsNotDone();
@@ -383,7 +383,7 @@ public class Yappy {
     /**
      * Deletes the requested task from the task list.
      */
-    private static void deleteTask(String input, List<Task> tasks) throws YappyException {
+    private static void deleteTask(String input, TaskList tasks) throws YappyException {
         int index = parseTaskIndex(input, Command.DELETE, tasks.size());
         Task removedTask = tasks.remove(index);
         System.out.println("Noted. I've removed this task:");
