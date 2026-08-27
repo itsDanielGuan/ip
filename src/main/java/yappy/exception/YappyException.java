@@ -1,3 +1,5 @@
+package yappy.exception;
+
 /**
  * Represents an error caused by invalid user input in the Yappy chatbot.
  */

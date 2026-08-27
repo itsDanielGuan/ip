@@ -1,3 +1,5 @@
+package yappy.task;
+
 /**
  * Represents the fixed task categories Yappy can display.
  */

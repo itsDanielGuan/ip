@@ -1,6 +1,16 @@
+package yappy;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import yappy.command.Command;
+import yappy.command.Parser;
+import yappy.exception.YappyException;
+import yappy.storage.Storage;
+import yappy.task.Task;
+import yappy.task.TaskList;
+import yappy.ui.Ui;
 
 /**
  * Coordinates Yappy's user interface, command processing, task list, and storage.

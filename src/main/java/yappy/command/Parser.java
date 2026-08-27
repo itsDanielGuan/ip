@@ -1,5 +1,12 @@
+package yappy.command;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+
+import yappy.exception.YappyException;
+import yappy.task.Deadline;
+import yappy.task.Event;
+import yappy.task.Todo;
 
 /**
  * Converts raw user input into commands, task data, and validated task indexes.

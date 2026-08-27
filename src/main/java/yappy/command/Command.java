@@ -1,3 +1,5 @@
+package yappy.command;
+
 /**
  * Represents the fixed set of commands that Yappy understands.
  */
