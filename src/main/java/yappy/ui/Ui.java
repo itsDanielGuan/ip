@@ -6,7 +6,7 @@ import yappy.task.Task;
 import yappy.task.TaskList;
 
 /**
- * Handles all console input and output for Yappy.
+ * Builds Yappy's messages and handles input and output for the retained console UI.
  */
 public class Ui {
     private static final String NAME = "Yappy";
@@ -42,13 +42,98 @@ public class Ui {
     }
 
     /**
+     * Returns Yappy's greeting.
+     */
+    public String getWelcome() {
+        return "Hello! I'm " + NAME + ".\nWhat can I do for you?";
+    }
+
+    /**
+     * Returns Yappy's farewell message.
+     */
+    public String getGoodbye() {
+        return "Bye. Hope to see you again soon!";
+    }
+
+    /**
+     * Returns a user-friendly command error.
+     */
+    public String getError(String message) {
+        return message;
+    }
+
+    /**
+     * Returns a warning that saved tasks could not be loaded.
+     */
+    public String getLoadingError() {
+        return "OOPS!!! I could not load your saved tasks. Starting with an empty list.";
+    }
+
+    /**
+     * Returns a warning that malformed saved records were ignored.
+     */
+    public String getSkippedRecords(int skippedRecords) {
+        return "OOPS!!! I skipped " + skippedRecords + " invalid saved task record(s).";
+    }
+
+    /**
+     * Returns a warning that the current task-list change could not be saved.
+     */
+    public String getSavingError(String details) {
+        return "OOPS!!! I could not save your tasks: " + details;
+    }
+
+    /**
+     * Returns every task in its current order using one-based numbering.
+     */
+    public String getTaskList(TaskList tasks) {
+        return "Here are the tasks in your list:" + getNumberedTasks(tasks);
+    }
+
+    /**
+     * Returns the tasks whose descriptions matched a find keyword.
+     */
+    public String getMatchingTasks(TaskList matchingTasks) {
+        return "Here are the matching tasks in your list:" + getNumberedTasks(matchingTasks);
+    }
+
+    /**
+     * Returns the confirmation that a task was added.
+     */
+    public String getTaskAdded(Task task, int taskCount) {
+        return "Got it. I've added this task:\n  " + task
+                + "\nNow you have " + taskCount + " tasks in the list.";
+    }
+
+    /**
+     * Returns the confirmation that a task was marked as done.
+     */
+    public String getTaskMarked(Task task) {
+        return "Nice! I've marked this task as done:\n  " + task;
+    }
+
+    /**
+     * Returns the confirmation that a task was marked as not done.
+     */
+    public String getTaskUnmarked(Task task) {
+        return "OK, I've marked this task as not done yet:\n  " + task;
+    }
+
+    /**
+     * Returns the confirmation that a task was deleted.
+     */
+    public String getTaskDeleted(Task task, int taskCount) {
+        return "Noted. I've removed this task:\n  " + task
+                + "\nNow you have " + taskCount + " tasks in the list.";
+    }
+
+    /**
      * Shows Yappy's banner and greeting.
      */
     public void showWelcome() {
         showLine();
         System.out.println(BANNER);
-        System.out.println("Hello! I'm " + NAME + ".");
-        System.out.println("What can I do for you?");
+        showMessage(getWelcome());
         showLine();
     }
 
@@ -57,7 +142,7 @@ public class Ui {
      */
     public void showGoodbye() {
         showLine();
-        System.out.println("Bye. Hope to see you again soon!");
+        showMessage(getGoodbye());
         showLine();
     }
 
@@ -69,89 +154,90 @@ public class Ui {
     }
 
     /**
+     * Shows a prepared Yappy message in the console.
+     */
+    public void showMessage(String message) {
+        System.out.println(message);
+    }
+
+    /**
      * Shows a user-friendly command error.
      */
     public void showError(String message) {
-        System.out.println(message);
+        showMessage(getError(message));
     }
 
     /**
      * Warns that saved tasks could not be loaded.
      */
     public void showLoadingError() {
-        System.out.println("OOPS!!! I could not load your saved tasks. Starting with an empty list.");
+        showMessage(getLoadingError());
     }
 
     /**
      * Warns that malformed saved records were ignored.
      */
     public void showSkippedRecords(int skippedRecords) {
-        System.out.println("OOPS!!! I skipped " + skippedRecords + " invalid saved task record(s).");
+        showMessage(getSkippedRecords(skippedRecords));
     }
 
     /**
      * Warns that the current task-list change could not be saved.
      */
     public void showSavingError(String details) {
-        System.out.println("OOPS!!! I could not save your tasks: " + details);
+        showMessage(getSavingError(details));
     }
 
     /**
      * Shows every task in its current order using one-based numbering.
      */
     public void showTaskList(TaskList tasks) {
-        System.out.println("Here are the tasks in your list:");
-        showNumberedTasks(tasks);
+        showMessage(getTaskList(tasks));
     }
 
     /**
      * Shows the tasks whose descriptions matched a find keyword.
      */
     public void showMatchingTasks(TaskList matchingTasks) {
-        System.out.println("Here are the matching tasks in your list:");
-        showNumberedTasks(matchingTasks);
+        showMessage(getMatchingTasks(matchingTasks));
     }
 
     /**
      * Shows the supplied tasks using one-based numbering.
      */
-    private void showNumberedTasks(TaskList tasks) {
+    private String getNumberedTasks(TaskList tasks) {
+        StringBuilder numberedTasks = new StringBuilder();
         for (int i = 0; i < tasks.size(); i++) {
-            System.out.println((i + 1) + "." + tasks.get(i));
+            numberedTasks.append("\n").append(i + 1).append(".").append(tasks.get(i));
         }
+        return numberedTasks.toString();
     }
 
     /**
      * Confirms that a task was added.
      */
     public void showTaskAdded(Task task, int taskCount) {
-        System.out.println("Got it. I've added this task:");
-        System.out.println("  " + task);
-        System.out.println("Now you have " + taskCount + " tasks in the list.");
+        showMessage(getTaskAdded(task, taskCount));
     }
 
     /**
      * Confirms that a task was marked as done.
      */
     public void showTaskMarked(Task task) {
-        System.out.println("Nice! I've marked this task as done:");
-        System.out.println("  " + task);
+        showMessage(getTaskMarked(task));
     }
 
     /**
      * Confirms that a task was marked as not done.
      */
     public void showTaskUnmarked(Task task) {
-        System.out.println("OK, I've marked this task as not done yet:");
-        System.out.println("  " + task);
+        showMessage(getTaskUnmarked(task));
     }
 
     /**
      * Confirms that a task was deleted.
      */
     public void showTaskDeleted(Task task, int taskCount) {
-        System.out.println("Noted. I've removed this task:");
-        System.out.println("  " + task);
-        System.out.println("Now you have " + taskCount + " tasks in the list.");
+        showMessage(getTaskDeleted(task, taskCount));
     }
 }

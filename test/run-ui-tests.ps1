@@ -50,11 +50,13 @@ function Assert-FragmentsInOrder {
     }
 }
 
-$sources = Get-ChildItem -Path "src/main/java" -Filter "*.java" -Recurse | ForEach-Object { $_.FullName }
-& javac -d bin $sources
+$gradleCommand = if ($env:OS -eq "Windows_NT") { ".\gradlew.bat" } else { "./gradlew" }
+& $gradleCommand classes
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
+
+$classPath = Join-Path "build" (Join-Path "classes" (Join-Path "java" "main"))
 
 $plan = Get-Content -LiteralPath $PlanPath -Raw
 $caseMatches = [regex]::Matches($plan, "(?ms)^## Test Case \d+: .+?(?=^## Test Case \d+: |\z)")
@@ -79,7 +81,7 @@ foreach ($caseMatch in $caseMatches) {
 
     Remove-Item -LiteralPath $DataPath -Force -ErrorAction SilentlyContinue
     $inputText = $commands.TrimEnd() + "`n"
-    $actual = $inputText | & java -cp bin yappy.Yappy
+    $actual = $inputText | & java -cp $classPath yappy.Yappy
     $actualText = ($actual -join "`n")
     $combinedActualText = $actualText
 
@@ -93,7 +95,7 @@ foreach ($caseMatch in $caseMatches) {
     if ($restartMatch.Success) {
         $restartCommands = $restartMatch.Groups[1].Value.Trim()
         $restartInputText = $restartCommands.TrimEnd() + "`n"
-        $restartActual = $restartInputText | & java -cp bin yappy.Yappy
+        $restartActual = $restartInputText | & java -cp $classPath yappy.Yappy
         $restartActualText = ($restartActual -join "`n")
         $combinedActualText = $actualText + "`n" + $restartActualText
     }
