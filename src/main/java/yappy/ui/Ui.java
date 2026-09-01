@@ -132,8 +132,7 @@ public class Ui {
      */
     public void showWelcome() {
         showLine();
-        System.out.println(BANNER);
-        showMessage(getWelcome());
+        showMessage(BANNER, getWelcome());
         showLine();
     }
 
@@ -154,10 +153,14 @@ public class Ui {
     }
 
     /**
-     * Shows a prepared Yappy message in the console.
+     * Shows one or more prepared Yappy messages in the console.
+     * Varargs keep the common one-message call concise while also supporting
+     * multi-part output such as the banner followed by the welcome message.
      */
-    public void showMessage(String message) {
-        System.out.println(message);
+    public void showMessage(String... messages) {
+        for (String message : messages) {
+            System.out.println(message);
+        }
     }
 
     /**
