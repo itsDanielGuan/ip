@@ -1,6 +1,5 @@
 package yappy.storage;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,10 +28,8 @@ public class StorageTest {
 
         List<Task> loadedTasks = storage.load();
 
-        assertAll(
-                () -> assertTrue(loadedTasks.isEmpty()),
-                () -> assertEquals(0, storage.getSkippedRecordCount())
-        );
+        assertTrue(loadedTasks.isEmpty());
+        assertEquals(0, storage.getSkippedRecordCount());
     }
 
     @Test
@@ -51,13 +48,11 @@ public class StorageTest {
         storage.save(originalTasks);
         List<Task> loadedTasks = storage.load();
 
-        assertAll(
-                () -> assertTrue(Files.exists(dataFile)),
-                () -> assertEquals(3, loadedTasks.size()),
-                () -> assertEquals(todo.toDataString(), loadedTasks.get(0).toDataString()),
-                () -> assertEquals(deadline.toDataString(), loadedTasks.get(1).toDataString()),
-                () -> assertEquals(event.toDataString(), loadedTasks.get(2).toDataString())
-        );
+        assertTrue(Files.exists(dataFile));
+        assertEquals(3, loadedTasks.size());
+        assertEquals(todo.toDataString(), loadedTasks.get(0).toDataString());
+        assertEquals(deadline.toDataString(), loadedTasks.get(1).toDataString());
+        assertEquals(event.toDataString(), loadedTasks.get(2).toDataString());
     }
 
     @Test
@@ -69,9 +64,7 @@ public class StorageTest {
 
         List<Task> loadedTasks = storage.load();
 
-        assertAll(
-                () -> assertEquals(1, loadedTasks.size()),
-                () -> assertEquals(1, storage.getSkippedRecordCount())
-        );
+        assertEquals(1, loadedTasks.size());
+        assertEquals(1, storage.getSkippedRecordCount());
     }
 }
