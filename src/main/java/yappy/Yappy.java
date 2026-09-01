@@ -16,6 +16,15 @@ import yappy.ui.Ui;
  * Coordinates Yappy's user interface, command processing, task list, and storage.
  */
 public class Yappy {
+    /** Style hint for commands that add a task. */
+    private static final String ADD_COMMAND = "AddCommand";
+
+    /** Style hint for commands that change whether a task is done. */
+    private static final String CHANGE_MARK_COMMAND = "ChangeMarkCommand";
+
+    /** Style hint for commands that delete a task. */
+    private static final String DELETE_COMMAND = "DeleteCommand";
+
     private static final Path DATA_FILE = Paths.get("data", "yappy.txt");
 
     private final Storage storage;
@@ -23,6 +32,15 @@ public class Yappy {
     private final Ui ui;
     private final int skippedRecordCount;
     private final boolean loadFailed;
+
+    private String commandType;
+
+    /**
+     * Creates a Yappy chatbot using its default relative data-file location.
+     */
+    public Yappy() {
+        this(DATA_FILE);
+    }
 
     /**
      * Creates a Yappy chatbot backed by the specified data file.
@@ -50,7 +68,7 @@ public class Yappy {
      * Starts Yappy using its default relative data-file location.
      */
     public static void main(String[] args) {
-        new Yappy(DATA_FILE).run();
+        new Yappy().run();
     }
 
     /**
@@ -66,14 +84,15 @@ public class Yappy {
 
         while (ui.hasNextCommand()) {
             String input = ui.readCommand();
-            if (Parser.getCommand(input) == Command.BYE) {
+            Command command = Parser.getCommand(input);
+            if (command == Command.BYE) {
                 break;
             }
 
             ui.showLine();
             try {
-                boolean taskListChanged = processInput(input);
-                if (taskListChanged) {
+                ui.showMessage(processInput(input));
+                if (changesTaskList(command)) {
                     storage.save(tasks);
                 }
             } catch (YappyException e) {
@@ -88,9 +107,56 @@ public class Yappy {
     }
 
     /**
-     * Executes one non-exit command and reports whether it changed the task list.
+     * Returns Yappy's greeting and any warning raised while loading saved tasks.
      */
-    private boolean processInput(String input) throws YappyException {
+    public String getWelcomeMessage() {
+        commandType = null;
+        if (loadFailed) {
+            return ui.getWelcome() + "\n" + ui.getLoadingError();
+        }
+        if (skippedRecordCount > 0) {
+            return ui.getWelcome() + "\n" + ui.getSkippedRecords(skippedRecordCount);
+        }
+        return ui.getWelcome();
+    }
+
+    /**
+     * Executes a GUI command and returns the response Yappy should display.
+     */
+    public String getResponse(String input) {
+        String trimmedInput = input.trim();
+        commandType = null;
+        try {
+            Command command = Parser.getCommand(trimmedInput);
+            if (command == Command.BYE) {
+                return ui.getGoodbye();
+            }
+
+            String response = processInput(trimmedInput);
+            if (changesTaskList(command)) {
+                storage.save(tasks);
+            }
+            return response;
+        } catch (YappyException e) {
+            commandType = null;
+            return ui.getError(e.getMessage());
+        } catch (IOException e) {
+            commandType = null;
+            return ui.getSavingError(e.getMessage());
+        }
+    }
+
+    /**
+     * Returns a hint describing the command handled by the latest GUI response.
+     */
+    public String getCommandType() {
+        return commandType;
+    }
+
+    /**
+     * Executes one non-exit command and returns Yappy's response.
+     */
+    private String processInput(String input) throws YappyException {
         if (input.isEmpty()) {
             throw new YappyException("OOPS!!! Please type a command.");
         }
@@ -98,29 +164,21 @@ public class Yappy {
         Command command = Parser.getCommand(input);
         switch (command) {
             case LIST:
-                ui.showTaskList(tasks);
-                return false;
+                return ui.getTaskList(tasks);
             case MARK:
-                markTask(input);
-                return true;
+                return markTask(input);
             case UNMARK:
-                unmarkTask(input);
-                return true;
+                return unmarkTask(input);
             case DELETE:
-                deleteTask(input);
-                return true;
+                return deleteTask(input);
             case FIND:
-                findTasks(input);
-                return false;
+                return findTasks(input);
             case TODO:
-                addTask(Parser.parseTodo(input));
-                return true;
+                return addTask(Parser.parseTodo(input));
             case DEADLINE:
-                addTask(Parser.parseDeadline(input));
-                return true;
+                return addTask(Parser.parseDeadline(input));
             case EVENT:
-                addTask(Parser.parseEvent(input));
-                return true;
+                return addTask(Parser.parseEvent(input));
             default:
                 throw new YappyException("OOPS!!! I don't know what that means. "
                         + "Try todo, deadline, event, list, find, mark, unmark, or delete.");
@@ -128,47 +186,63 @@ public class Yappy {
     }
 
     /**
-     * Adds a task and tells the user about the updated list.
+     * Returns whether the command changes task data that must be saved.
      */
-    private void addTask(Task task) {
-        tasks.add(task);
-        ui.showTaskAdded(task, tasks.size());
+    private boolean changesTaskList(Command command) {
+        return command == Command.MARK
+                || command == Command.UNMARK
+                || command == Command.DELETE
+                || command == Command.TODO
+                || command == Command.DEADLINE
+                || command == Command.EVENT;
     }
 
     /**
-     * Marks the requested task as done.
+     * Adds a task and returns a confirmation message.
      */
-    private void markTask(String input) throws YappyException {
+    private String addTask(Task task) {
+        tasks.add(task);
+        commandType = ADD_COMMAND;
+        return ui.getTaskAdded(task, tasks.size());
+    }
+
+    /**
+     * Marks the requested task as done and returns a confirmation message.
+     */
+    private String markTask(String input) throws YappyException {
         int index = Parser.parseTaskIndex(input, Command.MARK, tasks.size());
         Task task = tasks.get(index);
         task.markAsDone();
-        ui.showTaskMarked(task);
+        commandType = CHANGE_MARK_COMMAND;
+        return ui.getTaskMarked(task);
     }
 
     /**
-     * Marks the requested task as not done yet.
+     * Marks the requested task as not done yet and returns a confirmation message.
      */
-    private void unmarkTask(String input) throws YappyException {
+    private String unmarkTask(String input) throws YappyException {
         int index = Parser.parseTaskIndex(input, Command.UNMARK, tasks.size());
         Task task = tasks.get(index);
         task.markAsNotDone();
-        ui.showTaskUnmarked(task);
+        commandType = CHANGE_MARK_COMMAND;
+        return ui.getTaskUnmarked(task);
     }
 
     /**
-     * Deletes the requested task.
+     * Deletes the requested task and returns a confirmation message.
      */
-    private void deleteTask(String input) throws YappyException {
+    private String deleteTask(String input) throws YappyException {
         int index = Parser.parseTaskIndex(input, Command.DELETE, tasks.size());
         Task removedTask = tasks.remove(index);
-        ui.showTaskDeleted(removedTask, tasks.size());
+        commandType = DELETE_COMMAND;
+        return ui.getTaskDeleted(removedTask, tasks.size());
     }
 
     /**
-     * Shows tasks whose descriptions contain the requested keyword.
+     * Returns the tasks whose descriptions contain the requested keyword.
      */
-    private void findTasks(String input) throws YappyException {
+    private String findTasks(String input) throws YappyException {
         String keyword = Parser.parseFindKeyword(input);
-        ui.showMatchingTasks(tasks.find(keyword));
+        return ui.getMatchingTasks(tasks.find(keyword));
     }
 }
