@@ -1,6 +1,8 @@
 package yappy.ui;
 
 import java.util.Scanner;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import yappy.task.Task;
 import yappy.task.TaskList;
@@ -220,11 +222,9 @@ public class Ui {
      * Shows the supplied tasks using one-based numbering.
      */
     private String getNumberedTasks(TaskList tasks) {
-        StringBuilder numberedTasks = new StringBuilder();
-        for (int i = 0; i < tasks.size(); i++) {
-            numberedTasks.append("\n").append(i + 1).append(".").append(tasks.get(i));
-        }
-        return numberedTasks.toString();
+        return IntStream.range(0, tasks.size())
+                .mapToObj(index -> "\n" + (index + 1) + "." + tasks.get(index))
+                .collect(Collectors.joining());
     }
 
     /**
