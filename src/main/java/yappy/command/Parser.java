@@ -107,6 +107,25 @@ public class Parser {
     }
 
     /**
+     * Parses the non-negative number of days for a reminder query.
+     */
+    public static int parseReminderDays(String input) throws YappyException {
+        String daysText = getTextAfterCommand(input, Command.REMIND);
+        if (daysText.isEmpty()) {
+            throw new YappyException("OOPS!!! Please tell me how many days ahead to check, e.g. remind 7.");
+        }
+        try {
+            int days = Integer.parseInt(daysText);
+            if (days < 0) {
+                throw new YappyException("OOPS!!! Reminder days cannot be negative.");
+            }
+            return days;
+        } catch (NumberFormatException e) {
+            throw new YappyException("OOPS!!! Reminder days must be a whole number.");
+        }
+    }
+
+    /**
      * Converts the user's 1-based task number into a valid zero-based index.
      */
     public static int parseTaskIndex(String input, Command command, int taskCount) throws YappyException {

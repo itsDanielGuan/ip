@@ -106,7 +106,7 @@ Got it. I've added this task:
 Now you have 1 tasks in the list.
 OOPS!!! Please type a command.
 OOPS!!! The description of a todo cannot be empty.
-OOPS!!! I don't know what that means. Try todo, deadline, event, list, find, mark, unmark, or delete.
+OOPS!!! I don't know what that means. Try todo, deadline, event, list, find, remind, mark, unmark, or delete.
 Here are the tasks in your list:
 1.[T][ ] keep state
 Bye. Hope to see you again soon!
@@ -358,5 +358,46 @@ Here are the tasks in your list:
 1.[T][ ] Read Book
 2.[D][ ] return book (by: Aug 31 2026)
 3.[T][ ] buy groceries
+Bye. Hope to see you again soon!
+```
+
+## Test Case 11: Show Upcoming Deadline Reminders Without Changing State
+
+Aim: Verify that reminders show only incomplete deadlines, reject invalid periods,
+and do not modify the saved task list.
+
+Commands:
+```text
+todo prepare slides
+deadline submit report /by 2099-01-01
+deadline completed deadline /by 2099-01-02
+mark 3
+remind
+remind tomorrow
+remind -1
+remind 99999
+list
+bye
+```
+
+Expected output fragments:
+```text
+Got it. I've added this task:
+  [T][ ] prepare slides
+Got it. I've added this task:
+  [D][ ] submit report (by: Jan 01 2099)
+Got it. I've added this task:
+  [D][ ] completed deadline (by: Jan 02 2099)
+Nice! I've marked this task as done:
+  [D][X] completed deadline (by: Jan 02 2099)
+OOPS!!! Please tell me how many days ahead to check, e.g. remind 7.
+OOPS!!! Reminder days must be a whole number.
+OOPS!!! Reminder days cannot be negative.
+Here are your incomplete deadlines due within 99999 day(s):
+1.[D][ ] submit report (by: Jan 01 2099)
+Here are the tasks in your list:
+1.[T][ ] prepare slides
+2.[D][ ] submit report (by: Jan 01 2099)
+3.[D][X] completed deadline (by: Jan 02 2099)
 Bye. Hope to see you again soon!
 ```

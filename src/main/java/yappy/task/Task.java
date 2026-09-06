@@ -42,6 +42,11 @@ public abstract class Task {
         this.isDone = false;
     }
 
+    /** Returns whether this task has been completed. */
+    public boolean isDone() {
+        return isDone;
+    }
+
     /**
      * Returns whether this task's description contains the keyword, ignoring letter case.
      */

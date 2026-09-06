@@ -1,5 +1,6 @@
 package yappy.task;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,5 +62,25 @@ public class TaskList {
                 .filter(task -> task.containsKeyword(keyword))
                 .toList();
         return new TaskList(matchingTasks);
+    }
+
+    /**
+     * Returns incomplete deadlines from today through the specified number of days ahead.
+     * Overdue tasks are deliberately omitted: they need an explicit date change rather than
+     * an "upcoming" reminder.
+     */
+    public TaskList getUpcomingDeadlines(LocalDate today, int daysAhead) {
+        assert today != null : "Today's date must not be null";
+        assert daysAhead >= 0 : "Reminder period must not be negative";
+        LocalDate lastReminderDate = today.plusDays(daysAhead);
+        List<Task> upcomingDeadlines = tasks.stream()
+                .filter(task -> task instanceof Deadline)
+                .filter(task -> !task.isDone())
+                .filter(task -> {
+                    LocalDate dueDate = ((Deadline) task).getBy();
+                    return !dueDate.isBefore(today) && !dueDate.isAfter(lastReminderDate);
+                })
+                .toList();
+        return new TaskList(upcomingDeadlines);
     }
 }

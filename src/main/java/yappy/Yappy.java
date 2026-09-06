@@ -3,6 +3,7 @@ package yappy;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 
 import yappy.command.Command;
 import yappy.command.Parser;
@@ -24,6 +25,9 @@ public class Yappy {
 
     /** Style hint for commands that delete a task. */
     private static final String DELETE_COMMAND = "DeleteCommand";
+
+    /** Style hint for commands that display reminders. */
+    private static final String REMINDER_COMMAND = "ReminderCommand";
 
     private static final Path DATA_FILE = Paths.get("data", "yappy.txt");
 
@@ -173,6 +177,8 @@ public class Yappy {
                 return deleteTask(input);
             case FIND:
                 return findTasks(input);
+            case REMIND:
+                return showReminders(input);
             case TODO:
                 return addTask(Parser.parseTodo(input));
             case DEADLINE:
@@ -181,7 +187,7 @@ public class Yappy {
                 return addTask(Parser.parseEvent(input));
             default:
                 throw new YappyException("OOPS!!! I don't know what that means. "
-                        + "Try todo, deadline, event, list, find, mark, unmark, or delete.");
+                        + "Try todo, deadline, event, list, find, remind, mark, unmark, or delete.");
         }
     }
 
@@ -244,5 +250,14 @@ public class Yappy {
     private String findTasks(String input) throws YappyException {
         String keyword = Parser.parseFindKeyword(input);
         return ui.getMatchingTasks(tasks.find(keyword));
+    }
+
+    /**
+     * Returns incomplete deadlines that fall between today and the requested future date.
+     */
+    private String showReminders(String input) throws YappyException {
+        int daysAhead = Parser.parseReminderDays(input);
+        commandType = REMINDER_COMMAND;
+        return ui.getUpcomingDeadlines(tasks.getUpcomingDeadlines(LocalDate.now(), daysAhead), daysAhead);
     }
 }

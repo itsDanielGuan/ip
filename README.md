@@ -2,6 +2,8 @@
 
 This is a greenfield Java project for a chatbot named _Yappy_. Given below are instructions on how to use it.
 
+For available commands and examples, see the [Yappy User Guide](docs/README.md).
+
 ## Setting up in Intellij
 
 Prerequisites: JDK 25, update Intellij to the most recent version.

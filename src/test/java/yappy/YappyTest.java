@@ -40,4 +40,18 @@ public class YappyTest {
         assertEquals("OOPS!!! The description of a todo cannot be empty.", invalidResponse);
         assertEquals("Bye. Hope to see you again soon!", goodbyeResponse);
     }
+
+    @Test
+    public void getResponse_remind_returnsReminderMessageAndDoesNotChangeSavedTasks() {
+        Path dataFile = tempDirectory.resolve("yappy.txt");
+        Yappy yappy = new Yappy(dataFile);
+        yappy.getResponse("deadline submit report /by 2099-01-01");
+
+        String reminderResponse = yappy.getResponse("remind 99999");
+        String listResponse = new Yappy(dataFile).getResponse("list");
+
+        assertTrue(reminderResponse.contains("[D][ ] submit report (by: Jan 01 2099)"));
+        assertEquals("Here are the tasks in your list:\n1.[D][ ] submit report (by: Jan 01 2099)",
+                listResponse);
+    }
 }

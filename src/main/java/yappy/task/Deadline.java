@@ -23,6 +23,11 @@ public class Deadline extends Task {
         this.by = by;
     }
 
+    /** Returns the date by which this task should be completed. */
+    public LocalDate getBy() {
+        return by;
+    }
+
     @Override
     public String toDataString() {
         return "D | " + (isDone ? "1" : "0") + " | " + encode(description)
