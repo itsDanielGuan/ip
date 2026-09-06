@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Owns Yappy's ordered collection of tasks and the operations that modify it.
  */
-public class TaskList {
+public final class TaskList {
     private final List<Task> tasks;
 
     /**
