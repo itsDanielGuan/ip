@@ -1,6 +1,6 @@
 # UI Test Plan
 
-These tests exercise the retained console behavior through Duke Level 10. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output. Each test case starts with an empty data file unless it explicitly restarts Yappy.
+These tests exercise Yappy's console behavior through Level 10. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output. Each test case starts with an empty data file unless it explicitly restarts Yappy.
 
 ## Test Case 1: Add and List the Three Task Types
 
