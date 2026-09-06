@@ -85,6 +85,9 @@ public class DialogBox extends HBox {
             case "DeleteCommand":
                 dialog.getStyleClass().add("delete-label");
                 break;
+            case "ReminderCommand":
+                dialog.getStyleClass().add("reminder-label");
+                break;
             default:
                 break;
         }
