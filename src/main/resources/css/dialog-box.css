@@ -29,3 +29,7 @@
 .delete-label {
     -fx-background-color: lightpink;
 }
+
+.reminder-label {
+    -fx-background-color: lightskyblue;
+}
