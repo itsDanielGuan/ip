@@ -54,4 +54,15 @@ public class YappyTest {
         assertEquals("Here are the tasks in your list:\n1.[D][ ] submit report (by: Jan 01 2099)",
                 listResponse);
     }
+
+    @Test
+    public void getResponse_remindWithNoUpcomingDeadlines_returnsClearMessage() {
+        Yappy yappy = new Yappy(tempDirectory.resolve("yappy.txt"));
+
+        String reminderResponse = yappy.getResponse("remind 7");
+
+        assertEquals("Here are your incomplete deadlines due within 7 day(s):\n  None. You're all clear!",
+                reminderResponse);
+        assertEquals("ReminderCommand", yappy.getCommandType());
+    }
 }
