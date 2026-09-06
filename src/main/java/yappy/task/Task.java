@@ -13,8 +13,8 @@ public abstract class Task {
      * Fields are protected so subclasses can format task-specific display text
      * without needing extra getter methods at this early project stage.
      */
-    protected TaskType taskType;
-    protected String description;
+    protected final TaskType taskType;
+    protected final String description;
     protected boolean isDone;
 
     /**
