@@ -41,6 +41,7 @@ public class TaskList {
      * Appends a task to the end of the list.
      */
     public void add(Task task) {
+        assert task != null : "A task to add must not be null";
         tasks.add(task);
     }
 
@@ -48,6 +49,7 @@ public class TaskList {
      * Removes and returns the task at the specified zero-based index.
      */
     public Task remove(int index) {
+        assert index >= 0 && index < tasks.size() : "Task index must be valid";
         return tasks.remove(index);
     }
 
