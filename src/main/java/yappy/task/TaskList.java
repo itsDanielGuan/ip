@@ -35,6 +35,7 @@ public class TaskList {
      * Returns the task at the specified zero-based index.
      */
     public Task get(int index) {
+        assert index >= 0 && index < tasks.size() : "Task index must be valid";
         return tasks.get(index);
     }
 
