@@ -5,6 +5,8 @@ record tasks and check approaching deadlines. Run `Yappy.jar`, then type a
 command in the console or the GUI input box. Dates use the ISO format
 `yyyy-MM-dd`.
 
+![Yappy's full conversation window](Ui.png)
+
 ## Commands at a glance
 
 | Command | Purpose |
