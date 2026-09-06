@@ -28,7 +28,7 @@ public class MainWindow extends AnchorPane {
     private final Image userImage = new Image(
             this.getClass().getResourceAsStream("/images/DaUser.png"));
     private final Image yappyImage = new Image(
-            this.getClass().getResourceAsStream("/images/DaDuke.png"));
+            this.getClass().getResourceAsStream("/images/DaYappy.png"));
 
     private Yappy yappy;
 
