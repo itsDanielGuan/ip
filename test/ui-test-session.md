@@ -186,7 +186,7 @@ ____________________________________________________________
 OOPS!!! The description of a todo cannot be empty.
 ____________________________________________________________
 ____________________________________________________________
-OOPS!!! I don't know what that means. Try todo, deadline, event, list, find, mark, unmark, or delete.
+OOPS!!! I don't know what that means. Try todo, deadline, event, list, find, remind, mark, unmark, or delete.
 ____________________________________________________________
 ____________________________________________________________
 Here are the tasks in your list:
@@ -639,6 +639,77 @@ Here are the tasks in your list:
 1.[T][ ] Read Book
 2.[D][ ] return book (by: Aug 31 2026)
 3.[T][ ] buy groceries
+____________________________________________________________
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+## Test Case 11: Show Upcoming Deadline Reminders Without Changing State
+
+Console input:
+```text
+todo prepare slides
+deadline submit report /by 2099-01-01
+deadline completed deadline /by 2099-01-02
+mark 3
+remind
+remind tomorrow
+remind -1
+remind 99999
+list
+bye
+```
+
+Console output:
+```text
+____________________________________________________________
+__   __
+\ \ / /  __ _  _ __   _ __   _   _
+ \ V /  / _` || '_ \ | '_ \ | | | |
+  | |  | (_| || |_) || |_) || |_| |
+  |_|   \__,_|| .__/ | .__/  \__, |
+              |_|    |_|      |___/
+Hello! I'm Yappy.
+What can I do for you?
+____________________________________________________________
+____________________________________________________________
+Got it. I've added this task:
+  [T][ ] prepare slides
+Now you have 1 tasks in the list.
+____________________________________________________________
+____________________________________________________________
+Got it. I've added this task:
+  [D][ ] submit report (by: Jan 01 2099)
+Now you have 2 tasks in the list.
+____________________________________________________________
+____________________________________________________________
+Got it. I've added this task:
+  [D][ ] completed deadline (by: Jan 02 2099)
+Now you have 3 tasks in the list.
+____________________________________________________________
+____________________________________________________________
+Nice! I've marked this task as done:
+  [D][X] completed deadline (by: Jan 02 2099)
+____________________________________________________________
+____________________________________________________________
+OOPS!!! Please tell me how many days ahead to check, e.g. remind 7.
+____________________________________________________________
+____________________________________________________________
+OOPS!!! Reminder days must be a whole number.
+____________________________________________________________
+____________________________________________________________
+OOPS!!! Reminder days cannot be negative.
+____________________________________________________________
+____________________________________________________________
+Here are your incomplete deadlines due within 99999 day(s):
+1.[D][ ] submit report (by: Jan 01 2099)
+____________________________________________________________
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] prepare slides
+2.[D][ ] submit report (by: Jan 01 2099)
+3.[D][X] completed deadline (by: Jan 02 2099)
 ____________________________________________________________
 ____________________________________________________________
 Bye. Hope to see you again soon!

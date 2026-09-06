@@ -65,4 +65,13 @@ public class ParserTest {
         assertEquals("project book", Parser.parseFindKeyword("find project book"));
         assertThrows(YappyException.class, () -> Parser.parseFindKeyword("find"));
     }
+
+    @Test
+    public void parseReminderDays_validAndInvalidValues_returnsDaysOrThrows() throws YappyException {
+        assertEquals(7, Parser.parseReminderDays("remind 7"));
+        assertEquals(0, Parser.parseReminderDays("remind 0"));
+        assertThrows(YappyException.class, () -> Parser.parseReminderDays("remind"));
+        assertThrows(YappyException.class, () -> Parser.parseReminderDays("remind tomorrow"));
+        assertThrows(YappyException.class, () -> Parser.parseReminderDays("remind -1"));
+    }
 }

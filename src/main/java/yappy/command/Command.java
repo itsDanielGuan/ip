@@ -22,6 +22,9 @@ public enum Command {
     /** Finds tasks whose descriptions contain a keyword. */
     FIND("find"),
 
+    /** Lists incomplete deadlines that need attention soon. */
+    REMIND("remind"),
+
     /** Adds a todo task. */
     TODO("todo"),
 

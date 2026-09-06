@@ -98,6 +98,17 @@ public class Ui {
     }
 
     /**
+     * Returns incomplete deadlines due in the requested reminder period.
+     */
+    public String getUpcomingDeadlines(TaskList upcomingDeadlines, int daysAhead) {
+        String heading = "Here are your incomplete deadlines due within " + daysAhead + " day(s):";
+        if (upcomingDeadlines.size() == 0) {
+            return heading + "\n  None. You're all clear!";
+        }
+        return heading + getNumberedTasks(upcomingDeadlines);
+    }
+
+    /**
      * Returns the confirmation that a task was added.
      */
     public String getTaskAdded(Task task, int taskCount) {
