@@ -57,12 +57,9 @@ public class TaskList {
      * Returns a new task list containing tasks whose descriptions match the keyword.
      */
     public TaskList find(String keyword) {
-        List<Task> matchingTasks = new ArrayList<>();
-        for (Task task : tasks) {
-            if (task.containsKeyword(keyword)) {
-                matchingTasks.add(task);
-            }
-        }
+        List<Task> matchingTasks = tasks.stream()
+                .filter(task -> task.containsKeyword(keyword))
+                .toList();
         return new TaskList(matchingTasks);
     }
 }
