@@ -1,6 +1,7 @@
 package yappy;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -36,11 +37,19 @@ public class YappyTest {
 
         String invalidResponse = yappy.getResponse("todo");
         String invalidCommandType = yappy.getCommandType();
+        boolean exitsAfterInvalidCommand = yappy.shouldExit();
+        String invalidByeResponse = yappy.getResponse("bye later");
+        boolean exitsAfterInvalidByeCommand = yappy.shouldExit();
         String goodbyeResponse = yappy.getResponse("bye");
+        boolean exitsAfterByeCommand = yappy.shouldExit();
 
         assertEquals("OOPS!!! The description of a todo cannot be empty.", invalidResponse);
         assertEquals("ErrorCommand", invalidCommandType);
+        assertFalse(exitsAfterInvalidCommand);
+        assertEquals("OOPS!!! The bye command does not take extra arguments.", invalidByeResponse);
+        assertFalse(exitsAfterInvalidByeCommand);
         assertEquals("Bye. Hope to see you again soon!", goodbyeResponse);
+        assertTrue(exitsAfterByeCommand);
     }
 
     @Test

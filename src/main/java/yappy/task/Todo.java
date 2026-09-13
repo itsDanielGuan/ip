@@ -15,12 +15,4 @@ public class Todo extends Task {
     public String toDataString() {
         return "T | " + (isDone ? "1" : "0") + " | " + encode(description);
     }
-
-    /**
-     * Returns the todo formatted for display.
-     */
-    @Override
-    public String toString() {
-        return super.toString();
-    }
 }

@@ -1,5 +1,7 @@
 package yappy.gui;
 
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
@@ -7,12 +9,16 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import yappy.Yappy;
 
 /**
  * Controls Yappy's main conversation window.
  */
 public class MainWindow extends AnchorPane {
+    /** Brief delay that lets the user read Yappy's farewell before the GUI closes. */
+    private static final Duration EXIT_DELAY = Duration.millis(800);
+
     @FXML
     private ScrollPane scrollPane;
 
@@ -68,5 +74,11 @@ public class MainWindow extends AnchorPane {
         }
         userInput.clear();
         userInput.requestFocus();
+
+        if (yappy.shouldExit()) {
+            PauseTransition exitDelay = new PauseTransition(EXIT_DELAY);
+            exitDelay.setOnFinished(event -> Platform.exit());
+            exitDelay.play();
+        }
     }
 }
