@@ -29,6 +29,9 @@ public class Yappy {
     /** Style hint for commands that display reminders. */
     private static final String REMINDER_COMMAND = "ReminderCommand";
 
+    /** Style hint for responses that report invalid input or storage failures. */
+    private static final String ERROR_COMMAND = "ErrorCommand";
+
     private static final Path DATA_FILE = Paths.get("data", "yappy.txt");
 
     private final Storage storage;
@@ -90,7 +93,15 @@ public class Yappy {
             String input = ui.readCommand();
             Command command = Parser.getCommand(input);
             if (command == Command.BYE) {
-                break;
+                try {
+                    Parser.parseNoArguments(input, Command.BYE);
+                    break;
+                } catch (YappyException e) {
+                    ui.showLine();
+                    ui.showError(e.getMessage());
+                    ui.showLine();
+                    continue;
+                }
             }
 
             ui.showLine();
@@ -116,9 +127,11 @@ public class Yappy {
     public String getWelcomeMessage() {
         commandType = null;
         if (loadFailed) {
+            commandType = ERROR_COMMAND;
             return ui.getWelcome() + "\n" + ui.getLoadingError();
         }
         if (skippedRecordCount > 0) {
+            commandType = ERROR_COMMAND;
             return ui.getWelcome() + "\n" + ui.getSkippedRecords(skippedRecordCount);
         }
         return ui.getWelcome();
@@ -133,6 +146,7 @@ public class Yappy {
         try {
             Command command = Parser.getCommand(trimmedInput);
             if (command == Command.BYE) {
+                Parser.parseNoArguments(trimmedInput, Command.BYE);
                 return ui.getGoodbye();
             }
 
@@ -142,10 +156,10 @@ public class Yappy {
             }
             return response;
         } catch (YappyException e) {
-            commandType = null;
+            commandType = ERROR_COMMAND;
             return ui.getError(e.getMessage());
         } catch (IOException e) {
-            commandType = null;
+            commandType = ERROR_COMMAND;
             return ui.getSavingError(e.getMessage());
         }
     }
@@ -168,6 +182,7 @@ public class Yappy {
         Command command = Parser.getCommand(input);
         switch (command) {
             case LIST:
+                Parser.parseNoArguments(input, Command.LIST);
                 return ui.getTaskList(tasks);
             case MARK:
                 return markTask(input);

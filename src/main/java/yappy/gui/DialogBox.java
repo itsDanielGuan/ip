@@ -13,6 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 
 /**
  * Represents a dialog box containing the speaker's image and message.
@@ -36,6 +37,8 @@ public class DialogBox extends HBox {
         }
 
         dialog.setText(text);
+        dialog.maxWidthProperty().bind(widthProperty().subtract(96));
+        HBox.setHgrow(dialog, Priority.ALWAYS);
         displayPicture.setImage(image);
     }
 
@@ -87,6 +90,9 @@ public class DialogBox extends HBox {
                 break;
             case "ReminderCommand":
                 dialog.getStyleClass().add("reminder-label");
+                break;
+            case "ErrorCommand":
+                dialog.getStyleClass().add("error-label");
                 break;
             default:
                 break;

@@ -1,5 +1,7 @@
 package yappy.command;
 
+import java.util.Locale;
+
 /**
  * Represents the fixed set of commands that Yappy understands.
  */
@@ -56,7 +58,7 @@ public enum Command {
      * Finds the command matching the first word of the user's input.
      */
     public static Command fromInput(String input) {
-        String commandWord = input.split("\\s+", 2)[0];
+        String commandWord = input.trim().split("\\s+", 2)[0].toLowerCase(Locale.ROOT);
         for (Command command : values()) {
             if (command.word.equals(commandWord)) {
                 return command;

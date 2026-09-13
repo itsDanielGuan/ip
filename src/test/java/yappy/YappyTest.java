@@ -35,10 +35,21 @@ public class YappyTest {
         Yappy yappy = new Yappy(tempDirectory.resolve("yappy.txt"));
 
         String invalidResponse = yappy.getResponse("todo");
+        String invalidCommandType = yappy.getCommandType();
         String goodbyeResponse = yappy.getResponse("bye");
 
         assertEquals("OOPS!!! The description of a todo cannot be empty.", invalidResponse);
+        assertEquals("ErrorCommand", invalidCommandType);
         assertEquals("Bye. Hope to see you again soon!", goodbyeResponse);
+    }
+
+    @Test
+    public void getResponse_flexibleSpacingAndCase_addsTask() {
+        Yappy yappy = new Yappy(tempDirectory.resolve("yappy.txt"));
+
+        String response = yappy.getResponse("  TODO    Prepare Demo  ");
+
+        assertTrue(response.contains("[T][ ] Prepare Demo"));
     }
 
     @Test

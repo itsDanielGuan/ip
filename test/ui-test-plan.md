@@ -1,6 +1,6 @@
 # UI Test Plan
 
-These tests exercise Yappy's console behavior through Level 10. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output. Each test case starts with an empty data file unless it explicitly restarts Yappy.
+These tests exercise Yappy's finalized console behavior through Week 6. Expected output blocks list fragments that must appear in order; the banner and divider lines may also appear in the actual console output. Each test case starts with an empty data file unless it explicitly restarts Yappy.
 
 ## Test Case 1: Add and List the Three Task Types
 
@@ -19,7 +19,7 @@ Expected output fragments:
 ```text
 Got it. I've added this task:
   [T][ ] borrow book
-Now you have 1 tasks in the list.
+Now you have 1 task in the list.
 Got it. I've added this task:
   [D][ ] return book (by: Aug 30 2026)
 Now you have 2 tasks in the list.
@@ -79,7 +79,7 @@ Expected output fragments:
 ```text
 Got it. I've added this task:
   [D][ ] do homework (by: Dec 02 2019)
-Now you have 1 tasks in the list.
+Now you have 1 task in the list.
 Here are the tasks in your list:
 1.[D][ ] do homework (by: Dec 02 2019)
 Bye. Hope to see you again soon!
@@ -103,7 +103,7 @@ Expected output fragments:
 ```text
 Got it. I've added this task:
   [T][ ] keep state
-Now you have 1 tasks in the list.
+Now you have 1 task in the list.
 OOPS!!! Please type a command.
 OOPS!!! The description of a todo cannot be empty.
 OOPS!!! I don't know what that means. Try todo, deadline, event, list, find, remind, mark, unmark, or delete.
@@ -145,7 +145,7 @@ OOPS!!! Please enter the /by date as yyyy-MM-dd, e.g. 2019-10-15.
 OOPS!!! Please enter the /by date as yyyy-MM-dd, e.g. 2019-10-15.
 Got it. I've added this task:
   [D][ ] pay bills (by: Aug 29 2026)
-Now you have 1 tasks in the list.
+Now you have 1 task in the list.
 OOPS!!! The description of an event cannot be empty.
 OOPS!!! The /from value of an event cannot be empty.
 OOPS!!! Please use: event DESCRIPTION /from START /to END
@@ -187,7 +187,7 @@ Expected output fragments:
 OOPS!!! There are no tasks in the list yet.
 Got it. I've added this task:
   [T][ ] alpha
-Now you have 1 tasks in the list.
+Now you have 1 task in the list.
 OOPS!!! Please tell me which task to mark, e.g. mark 1.
 OOPS!!! Task numbers must be whole numbers.
 OOPS!!! Task number must be between 1 and 1.
@@ -281,7 +281,7 @@ Here are the tasks in your list:
 2.[T][ ] beta
 Noted. I've removed this task:
   [T][ ] beta
-Now you have 1 tasks in the list.
+Now you have 1 task in the list.
 Here are the tasks in your list:
 1.[T][ ] alpha
 Bye. Hope to see you again soon!
@@ -320,7 +320,7 @@ Here are the tasks in your list:
 2.[D][X] submit report (by: Aug 29 2026)
 Noted. I've removed this task:
   [T][ ] write report
-Now you have 1 tasks in the list.
+Now you have 1 task in the list.
 Bye. Hope to see you again soon!
 ```
 
@@ -399,5 +399,40 @@ Here are the tasks in your list:
 1.[T][ ] prepare slides
 2.[D][ ] submit report (by: Jan 01 2099)
 3.[D][X] completed deadline (by: Jan 02 2099)
+Bye. Hope to see you again soon!
+```
+
+## Test Case 12: Handle Flexible Commands and Reject Ambiguous Formats Without Changing State
+
+Aim: Verify that command words are case-insensitive and tolerate surrounding whitespace, while extra
+arguments and duplicated or misordered date markers report specific errors without changing the task list.
+
+Commands:
+```text
+  TODO    Prepare Demo
+list later
+deadline duplicate marker /by 2026-09-01 /by 2026-09-02
+event duplicate marker /from 2026-09-01 /from 2026-09-02 /to 2026-09-03
+event wrong order /to 2026-09-03 /from 2026-09-01
+list
+bye later
+list
+bye
+```
+
+Expected output fragments:
+```text
+Got it. I've added this task:
+  [T][ ] Prepare Demo
+Now you have 1 task in the list.
+OOPS!!! The list command does not take extra arguments.
+OOPS!!! Please specify /by only once.
+OOPS!!! Please specify /from only once.
+OOPS!!! Please put /from before /to in an event.
+Here are the tasks in your list:
+1.[T][ ] Prepare Demo
+OOPS!!! The bye command does not take extra arguments.
+Here are the tasks in your list:
+1.[T][ ] Prepare Demo
 Bye. Hope to see you again soon!
 ```

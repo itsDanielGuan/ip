@@ -107,8 +107,7 @@ public class Storage {
                 break;
             case "E":
                 requireFieldCount(fields, 5);
-                task = new Event(decodeDescription(fields[2]), parseStoredDate(fields[3]),
-                        parseStoredDate(fields[4]));
+                task = parseStoredEvent(fields);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown task type");
@@ -118,6 +117,18 @@ public class Storage {
             task.markAsDone();
         }
         return task;
+    }
+
+    /**
+     * Parses an event record and rejects a date range that could not be created through Yappy.
+     */
+    private Event parseStoredEvent(String[] fields) {
+        LocalDate from = parseStoredDate(fields[3]);
+        LocalDate to = parseStoredDate(fields[4]);
+        if (to.isBefore(from)) {
+            throw new IllegalArgumentException("Event end date is before its start date");
+        }
+        return new Event(decodeDescription(fields[2]), from, to);
     }
 
     /**

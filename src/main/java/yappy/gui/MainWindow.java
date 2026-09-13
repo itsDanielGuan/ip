@@ -58,9 +58,15 @@ public class MainWindow extends AnchorPane {
         String response = yappy.getResponse(input);
         String commandType = yappy.getCommandType();
 
-        dialogContainer.getChildren().addAll(
-                DialogBox.getUserDialog(input, userImage),
-                DialogBox.getYappyDialog(response, yappyImage, commandType));
+        if (input.isBlank()) {
+            dialogContainer.getChildren().add(
+                    DialogBox.getYappyDialog(response, yappyImage, commandType));
+        } else {
+            dialogContainer.getChildren().addAll(
+                    DialogBox.getUserDialog(input.trim(), userImage),
+                    DialogBox.getYappyDialog(response, yappyImage, commandType));
+        }
         userInput.clear();
+        userInput.requestFocus();
     }
 }

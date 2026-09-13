@@ -2,6 +2,8 @@ package yappy.command;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import yappy.exception.YappyException;
 import yappy.task.Deadline;
@@ -42,14 +44,19 @@ public class Parser {
      */
     public static Deadline parseDeadline(String input) throws YappyException {
         String taskDetails = getTextAfterCommand(input, Command.DEADLINE);
-        int byIndex = taskDetails.indexOf(BY_MARKER);
+        Matcher byMatcher = getMarkerMatcher(taskDetails, BY_MARKER);
 
-        if (byIndex == -1) {
+        if (!byMatcher.find()) {
             throw new YappyException("OOPS!!! Please use: deadline DESCRIPTION /by WHEN");
+        }
+        int byIndex = byMatcher.start();
+        int byEndIndex = byMatcher.end();
+        if (byMatcher.find()) {
+            throw new YappyException("OOPS!!! Please specify /by only once.");
         }
 
         String description = taskDetails.substring(0, byIndex).trim();
-        String by = taskDetails.substring(byIndex + BY_MARKER.length()).trim();
+        String by = taskDetails.substring(byEndIndex).trim();
         if (description.isEmpty()) {
             throw new YappyException("OOPS!!! The description of a deadline cannot be empty.");
         }
@@ -65,18 +72,29 @@ public class Parser {
      */
     public static Event parseEvent(String input) throws YappyException {
         String taskDetails = getTextAfterCommand(input, Command.EVENT);
-        int fromIndex = taskDetails.indexOf(FROM_MARKER);
-        int toIndex = fromIndex == -1
-                ? -1
-                : taskDetails.indexOf(TO_MARKER, fromIndex + FROM_MARKER.length());
+        Matcher fromMatcher = getMarkerMatcher(taskDetails, FROM_MARKER);
+        Matcher toMatcher = getMarkerMatcher(taskDetails, TO_MARKER);
 
-        if (fromIndex == -1 || toIndex == -1) {
+        if (!fromMatcher.find() || !toMatcher.find()) {
             throw new YappyException("OOPS!!! Please use: event DESCRIPTION /from START /to END");
+        }
+        int fromIndex = fromMatcher.start();
+        int fromEndIndex = fromMatcher.end();
+        int toIndex = toMatcher.start();
+        int toEndIndex = toMatcher.end();
+        if (fromMatcher.find()) {
+            throw new YappyException("OOPS!!! Please specify /from only once.");
+        }
+        if (toMatcher.find()) {
+            throw new YappyException("OOPS!!! Please specify /to only once.");
+        }
+        if (toIndex < fromIndex) {
+            throw new YappyException("OOPS!!! Please put /from before /to in an event.");
         }
 
         String description = taskDetails.substring(0, fromIndex).trim();
-        String from = taskDetails.substring(fromIndex + FROM_MARKER.length(), toIndex).trim();
-        String to = taskDetails.substring(toIndex + TO_MARKER.length()).trim();
+        String from = taskDetails.substring(fromEndIndex, toIndex).trim();
+        String to = taskDetails.substring(toEndIndex).trim();
         if (description.isEmpty()) {
             throw new YappyException("OOPS!!! The description of an event cannot be empty.");
         }
@@ -152,10 +170,30 @@ public class Parser {
     }
 
     /**
+     * Verifies that a command which takes no parameters has no trailing text.
+     */
+    public static void parseNoArguments(String input, Command command) throws YappyException {
+        if (!getTextAfterCommand(input, command).isEmpty()) {
+            throw new YappyException("OOPS!!! The " + command.getWord()
+                    + " command does not take extra arguments.");
+        }
+    }
+
+    /**
      * Returns the user's text after the command word.
      */
     private static String getTextAfterCommand(String input, Command command) {
-        return input.substring(command.getWord().length()).trim();
+        String trimmedInput = input.trim();
+        return trimmedInput.substring(command.getWord().length()).trim();
+    }
+
+    /**
+     * Finds a command marker only when it appears as a complete whitespace-delimited token.
+     * This avoids treating text such as "/bypass" as the deadline marker.
+     */
+    private static Matcher getMarkerMatcher(String input, String marker) {
+        Pattern markerPattern = Pattern.compile("(?<!\\S)" + Pattern.quote(marker) + "(?!\\S)");
+        return markerPattern.matcher(input);
     }
 
     /**

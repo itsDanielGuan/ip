@@ -3,7 +3,8 @@
 Yappy is a desktop and console task manager for people who want a quick way to
 record tasks and check approaching deadlines. Run `Yappy.jar`, then type a
 command in the console or the GUI input box. Dates use the ISO format
-`yyyy-MM-dd`.
+`yyyy-MM-dd`. Command words are case-insensitive, and Yappy tolerates extra
+spaces before the command and between the command word and its first value.
 
 ![Yappy's full conversation window](Ui.png)
 
@@ -20,6 +21,10 @@ command in the console or the GUI input box. Dates use the ISO format
 | `mark NUMBER` / `unmark NUMBER` | Mark a task done or not done. |
 | `delete NUMBER` | Delete a task. |
 | `bye` | Exit Yappy. |
+
+`list` and `bye` take no extra arguments. Date markers must appear exactly
+once and in the shown order; Yappy reports a specific error for duplicated or
+misordered markers instead of changing the task list.
 
 Task numbers shown by `list`, `find`, and `remind` start at 1. Only numbers
 from the main task list can be used with `mark`, `unmark`, or `delete`.
@@ -93,4 +98,5 @@ Yappy creates it when it first needs to save.
 
 Yappy reports invalid commands without changing the task list. In particular,
 check that task descriptions are present, task numbers are whole numbers in
-range, and dates are real `yyyy-MM-dd` dates.
+range, and dates are real `yyyy-MM-dd` dates. In the GUI, error responses use a
+red message bubble so they are easy to distinguish from normal replies.
