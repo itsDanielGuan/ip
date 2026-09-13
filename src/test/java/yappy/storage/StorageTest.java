@@ -67,4 +67,20 @@ public class StorageTest {
         assertEquals(1, loadedTasks.size());
         assertEquals(1, storage.getSkippedRecordCount());
     }
+
+    @Test
+    public void load_eventWithReversedDates_skipsInvalidEvent() throws Exception {
+        Path dataFile = tempDirectory.resolve("yappy.txt");
+        Event invalidEvent = new Event("impossible trip", LocalDate.of(2026, 9, 2),
+                LocalDate.of(2026, 9, 1));
+        String validRecord = new Todo("recover me").toDataString();
+        Files.write(dataFile, List.of(invalidEvent.toDataString(), validRecord), StandardCharsets.UTF_8);
+        Storage storage = new Storage(dataFile);
+
+        List<Task> loadedTasks = storage.load();
+
+        assertEquals(1, loadedTasks.size());
+        assertEquals(validRecord, loadedTasks.get(0).toDataString());
+        assertEquals(1, storage.getSkippedRecordCount());
+    }
 }

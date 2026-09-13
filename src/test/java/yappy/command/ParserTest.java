@@ -13,6 +13,7 @@ public class ParserTest {
     @Test
     public void getCommand_knownUnknownAndBlankInput_returnsMatchingCommand() {
         assertEquals(Command.TODO, Parser.getCommand("todo read book"));
+        assertEquals(Command.TODO, Parser.getCommand("  ToDo read book  "));
         assertEquals(Command.UNKNOWN, Parser.getCommand("dance"));
         assertEquals(Command.UNKNOWN, Parser.getCommand("   "));
     }
@@ -34,6 +35,14 @@ public class ParserTest {
     }
 
     @Test
+    public void parseDeadline_duplicateMarker_throwsSpecificException() {
+        YappyException exception = assertThrows(YappyException.class, () ->
+                Parser.parseDeadline("deadline submit /by 2026-08-30 /by 2026-08-31"));
+
+        assertEquals("OOPS!!! Please specify /by only once.", exception.getMessage());
+    }
+
+    @Test
     public void parseEvent_validDateRange_returnsFormattedEvent() throws YappyException {
         Event event = Parser.parseEvent("event camp /from 2026-08-30 /to 2026-09-01");
 
@@ -47,6 +56,17 @@ public class ParserTest {
 
         assertEquals("OOPS!!! An event's /to date cannot be before its /from date.",
                 exception.getMessage());
+    }
+
+    @Test
+    public void parseEvent_duplicateOrMisorderedMarkers_throwsSpecificExceptions() {
+        YappyException duplicateException = assertThrows(YappyException.class, () ->
+                Parser.parseEvent("event camp /from 2026-08-30 /from 2026-08-31 /to 2026-09-01"));
+        YappyException orderException = assertThrows(YappyException.class, () ->
+                Parser.parseEvent("event camp /to 2026-09-01 /from 2026-08-30"));
+
+        assertEquals("OOPS!!! Please specify /from only once.", duplicateException.getMessage());
+        assertEquals("OOPS!!! Please put /from before /to in an event.", orderException.getMessage());
     }
 
     @Test
@@ -73,5 +93,14 @@ public class ParserTest {
         assertThrows(YappyException.class, () -> Parser.parseReminderDays("remind"));
         assertThrows(YappyException.class, () -> Parser.parseReminderDays("remind tomorrow"));
         assertThrows(YappyException.class, () -> Parser.parseReminderDays("remind -1"));
+    }
+
+    @Test
+    public void parseNoArguments_emptyAndExtraArguments_acceptsOrThrows() throws YappyException {
+        Parser.parseNoArguments("  LIST  ", Command.LIST);
+
+        YappyException exception = assertThrows(YappyException.class, () ->
+                Parser.parseNoArguments("list later", Command.LIST));
+        assertEquals("OOPS!!! The list command does not take extra arguments.", exception.getMessage());
     }
 }

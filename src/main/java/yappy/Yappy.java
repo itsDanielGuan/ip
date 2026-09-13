@@ -29,13 +29,19 @@ public class Yappy {
     /** Style hint for commands that display reminders. */
     private static final String REMINDER_COMMAND = "ReminderCommand";
 
+    /** Style hint for responses that report invalid input or storage failures. */
+    private static final String ERROR_COMMAND = "ErrorCommand";
+
+    /** Style hint for a response after which the GUI should close. */
+    private static final String EXIT_COMMAND = "ExitCommand";
+
     private static final Path DATA_FILE = Paths.get("data", "yappy.txt");
 
     private final Storage storage;
     private final TaskList tasks;
     private final Ui ui;
     private final int skippedRecordCount;
-    private final boolean loadFailed;
+    private final boolean hasLoadFailed;
 
     private String commandType;
 
@@ -55,17 +61,17 @@ public class Yappy {
 
         TaskList loadedTasks;
         int skippedRecords = 0;
-        boolean loadingFailed = false;
+        boolean hasLoadingFailed = false;
         try {
             loadedTasks = new TaskList(storage.load());
             skippedRecords = storage.getSkippedRecordCount();
         } catch (IOException e) {
             loadedTasks = new TaskList();
-            loadingFailed = true;
+            hasLoadingFailed = true;
         }
         this.tasks = loadedTasks;
         this.skippedRecordCount = skippedRecords;
-        this.loadFailed = loadingFailed;
+        this.hasLoadFailed = hasLoadingFailed;
     }
 
     /**
@@ -80,7 +86,7 @@ public class Yappy {
      */
     public void run() {
         ui.showWelcome();
-        if (loadFailed) {
+        if (hasLoadFailed) {
             ui.showLoadingError();
         } else if (skippedRecordCount > 0) {
             ui.showSkippedRecords(skippedRecordCount);
@@ -90,7 +96,15 @@ public class Yappy {
             String input = ui.readCommand();
             Command command = Parser.getCommand(input);
             if (command == Command.BYE) {
-                break;
+                try {
+                    Parser.parseNoArguments(input, Command.BYE);
+                    break;
+                } catch (YappyException e) {
+                    ui.showLine();
+                    ui.showError(e.getMessage());
+                    ui.showLine();
+                    continue;
+                }
             }
 
             ui.showLine();
@@ -115,10 +129,12 @@ public class Yappy {
      */
     public String getWelcomeMessage() {
         commandType = null;
-        if (loadFailed) {
+        if (hasLoadFailed) {
+            commandType = ERROR_COMMAND;
             return ui.getWelcome() + "\n" + ui.getLoadingError();
         }
         if (skippedRecordCount > 0) {
+            commandType = ERROR_COMMAND;
             return ui.getWelcome() + "\n" + ui.getSkippedRecords(skippedRecordCount);
         }
         return ui.getWelcome();
@@ -133,6 +149,8 @@ public class Yappy {
         try {
             Command command = Parser.getCommand(trimmedInput);
             if (command == Command.BYE) {
+                Parser.parseNoArguments(trimmedInput, Command.BYE);
+                commandType = EXIT_COMMAND;
                 return ui.getGoodbye();
             }
 
@@ -142,10 +160,10 @@ public class Yappy {
             }
             return response;
         } catch (YappyException e) {
-            commandType = null;
+            commandType = ERROR_COMMAND;
             return ui.getError(e.getMessage());
         } catch (IOException e) {
-            commandType = null;
+            commandType = ERROR_COMMAND;
             return ui.getSavingError(e.getMessage());
         }
     }
@@ -155,6 +173,13 @@ public class Yappy {
      */
     public String getCommandType() {
         return commandType;
+    }
+
+    /**
+     * Returns whether the latest GUI response should be followed by closing the application.
+     */
+    public boolean shouldExit() {
+        return EXIT_COMMAND.equals(commandType);
     }
 
     /**
@@ -168,6 +193,7 @@ public class Yappy {
         Command command = Parser.getCommand(input);
         switch (command) {
             case LIST:
+                Parser.parseNoArguments(input, Command.LIST);
                 return ui.getTaskList(tasks);
             case MARK:
                 return markTask(input);

@@ -115,7 +115,7 @@ public class Ui {
      */
     public String getTaskAdded(Task task, int taskCount) {
         return "Got it. I've added this task:\n  " + task
-                + "\nNow you have " + taskCount + " tasks in the list.";
+                + "\nNow you have " + getTaskCount(taskCount) + " in the list.";
     }
 
     /**
@@ -137,7 +137,12 @@ public class Ui {
      */
     public String getTaskDeleted(Task task, int taskCount) {
         return "Noted. I've removed this task:\n  " + task
-                + "\nNow you have " + taskCount + " tasks in the list.";
+                + "\nNow you have " + getTaskCount(taskCount) + " in the list.";
+    }
+
+    /** Returns a grammatically correct task count for confirmation messages. */
+    private String getTaskCount(int taskCount) {
+        return taskCount + (taskCount == 1 ? " task" : " tasks");
     }
 
     /**
